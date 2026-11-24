@@ -1,0 +1,26 @@
+{
+  "errors": {
+    "badRequest": "Invalid request.",
+    "validation": "Some fields are invalid.",
+    "unauthorized": "Please sign in.",
+    "forbidden": "You are not allowed to do this.",
+    "notFound": "Not found.",
+    "conflict": "This already exists.",
+    "internal": "Something went wrong.",
+    "maintenance": "The app is under maintenance. Please try again later.",
+    "invalidCredentials": "Wrong phone, email or password.",
+    "phoneTaken": "This phone number is already registered.",
+    "emailTaken": "This email is already registered.",
+    "otpInvalid": "The code is wrong or expired.",
+    "otpTooManyAttempts": "Too many attempts. Request a new code.",
+    "emailNotVerified": "Verify your email first.",
+    "alreadyRated": "You already rated this provider with this phone number.",
+    "categoryNotFound": "Category not found.",
+    "providerNotFound": "Provider not found."
+  },
+  "messages": {
+    "otpSent": "A verification code was sent to your email.",
+    "accountHidden": "Your account is hidden and will be deleted after 30 days without sign-in.",
+    "accountRestored": "Welcome back. Your account is active again."
+  }
+}

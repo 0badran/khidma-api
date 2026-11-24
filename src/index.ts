@@ -1,9 +1,8 @@
-import express from "express";
+import { app } from "./app.js";
+import { env } from "./config/env.js";
+import { schedulePurge } from "./jobs/purge-hidden-accounts.js";
 
-const app = express();
-app.get("/health", (_req, res) => {
-  res.json({ ok: true });
+app.listen(env.PORT, () => {
+  console.log(`khidma-api listening on ${env.PORT}`);
 });
-
-const port = Number(process.env.PORT ?? 3000);
-app.listen(port);
+schedulePurge();
