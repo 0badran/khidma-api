@@ -6,8 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
-    "dev": "tsx watch --env-file=.env src/index.ts",
-    "start": "node --env-file=.env dist/index.js",
+    "dev": "tsx watch --env-file-if-exists=.env src/index.ts",
+    "start": "node --env-file-if-exists=.env dist/index.js",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit -p tsconfig.scripts.json",
     "db:generate": "node --env-file=.env ./node_modules/.bin/drizzle-kit generate",
@@ -38,6 +38,6 @@
     "typescript": "^7.0.2"
   },
   "engines": {
-    "node": ">=26"
+    "node": ">=24"
   }
 }
