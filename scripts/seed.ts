@@ -4,18 +4,17 @@ import { categories, settings, users } from "../src/db/schema.js";
 import { env } from "../src/config/env.js";
 import { hashPassword } from "../src/lib/security.js";
 
-// Placeholder categories. The final list of 10 is decided by the owner.
 const seedCategories = [
   ["سباك", "Plumber"],
   ["كهربائي", "Electrician"],
   ["نجار", "Carpenter"],
-  ["نقاش", "Painter"],
-  ["فني تكييف", "AC technician"],
-  ["فني أجهزة منزلية", "Appliance repair"],
-  ["عامل نظافة", "Cleaner"],
-  ["نقل أثاث", "Furniture mover"],
-  ["بستاني", "Gardener"],
-  ["حداد", "Blacksmith"],
+  ["دهان ونقاش", "Painting and decoration"],
+  ["تركيب سيراميك ورخام", "Ceramic and marble installation"],
+  ["غسيل وصيانة التكييف", "AC cleaning and maintenance"],
+  ["صيانة الأجهزة المنزلية (غسالة، ثلاجة، بوتجاز)", "Home appliance repair (washer, fridge, stove)"],
+  ["الأجهزة الإلكترونية والمراقبة: رسيفر / كاميرات مراقبة / إنترنت وراوتر", "Electronics and surveillance: receivers, CCTV cameras, internet and routers"],
+  ["خدمات النظافة: منزل / خزانات / سجاد وستائر", "Cleaning services: homes, water tanks, carpets and curtains"],
+  ["نقل وفك وتركيب الأثاث", "Furniture moving and assembly"],
 ] as const;
 
 const [existing] = await db.select({ n: count() }).from(categories);
