@@ -7,7 +7,8 @@ import { ageExpr } from "../../lib/age.js";
 import { conflict, notFound } from "../../lib/errors.js";
 import { parse } from "../../lib/validate.js";
 import { requireAuth, requireRole } from "../../middleware/auth.js";
-import { clearSetting, getPublicSettings, setSetting } from "../settings/settings.service.js";
+import { clearSetting, getPublicSettings, setSetting, setTheme } from "../settings/settings.service.js";
+import { themeInputSchema } from "../settings/theme.js";
 
 export const adminRouter = Router();
 adminRouter.use(requireAuth, requireRole("admin"));
@@ -118,6 +119,7 @@ const settingsSchema = z
     appName: z.string().trim().min(1).max(100),
     logoUrl: z.url().nullable(),
     maintenanceMode: z.boolean(),
+    theme: themeInputSchema,
   })
   .partial();
 
@@ -127,5 +129,6 @@ adminRouter.put("/settings", async (req, res) => {
   if (body.logoUrl === null) await clearSetting("logo_url");
   else if (body.logoUrl !== undefined) await setSetting("logo_url", body.logoUrl);
   if (body.maintenanceMode !== undefined) await setSetting("maintenance_mode", String(body.maintenanceMode));
+  if (body.theme !== undefined) await setTheme(body.theme);
   res.json(await getPublicSettings());
 });

@@ -5,6 +5,7 @@ import { sql } from "drizzle-orm";
 import { categories, cities, governorates, settings, users } from "../src/db/schema.js";
 import { env } from "../src/config/env.js";
 import { hashPassword } from "../src/lib/security.js";
+import { defaultTheme } from "../src/modules/settings/theme.js";
 
 const seedCategories = [
   ["سباك", "Plumber"],
@@ -49,6 +50,7 @@ await db
   .values([
     { key: "app_name", value: "khidma" },
     { key: "maintenance_mode", value: "false" },
+    { key: "theme", value: JSON.stringify(defaultTheme) },
   ])
   .onConflictDoNothing();
 
