@@ -19,7 +19,7 @@
     "providerNotFound": "Provider not found."
   },
   "messages": {
-    "otpSent": "A verification code was sent to your email.",
+    "otpSent": "A verification code was sent to your email. If you do not see it, check your spam folder.",
     "accountHidden": "Your account is hidden and will be deleted after 30 days without sign-in.",
     "accountRestored": "Welcome back. Your account is active again."
   }
