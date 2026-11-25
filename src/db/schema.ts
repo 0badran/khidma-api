@@ -50,6 +50,8 @@ export const providers = pgTable(
       .references(() => categories.id),
     city: text("city").notNull(),
     photoUrl: text("photo_url"),
+    yearsOfExperience: integer("years_of_experience"),
+    bio: text("bio"),
     // Admin switch: inactive providers are hidden from browsing.
     isActive: boolean("is_active").notNull().default(true),
   },

@@ -60,6 +60,8 @@ adminRouter.get("/providers", async (req, res) => {
       city: providers.city,
       categoryId: providers.categoryId,
       photoUrl: providers.photoUrl,
+      yearsOfExperience: providers.yearsOfExperience,
+      bio: providers.bio,
       isActive: providers.isActive,
       hiddenAt: users.hiddenAt,
     })

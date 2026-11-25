@@ -35,6 +35,7 @@ const providerColumns = {
   age: ageExpr,
   city: providers.city,
   photoUrl: sql<string>`coalesce(${providers.photoUrl}, ${AVATAR_PLACEHOLDER_URL}::text)`,
+  yearsOfExperience: providers.yearsOfExperience,
   categoryId: providers.categoryId,
   categoryNameAr: categories.nameAr,
   categoryNameEn: categories.nameEn,
@@ -73,6 +74,8 @@ const updateSchema = z
     city: z.string().trim().min(2).max(100),
     categoryId: z.number().int().positive(),
     photoUrl: z.url().nullable(),
+    yearsOfExperience: z.number().int().min(0).max(60).nullable(),
+    bio: z.string().trim().max(1000).nullable(),
   })
   .partial()
   .refine((v) => Object.keys(v).length > 0);
@@ -98,6 +101,8 @@ providersRouter.patch("/me", requireAuth, requireRole("provider"), async (req, r
       city: body.city,
       categoryId: body.categoryId,
       photoUrl: body.photoUrl,
+      yearsOfExperience: body.yearsOfExperience,
+      bio: body.bio,
     };
     if (Object.values(profile).some((v) => v !== undefined)) {
       await tx.update(providers).set(profile).where(eq(providers.userId, id));
@@ -109,7 +114,7 @@ providersRouter.patch("/me", requireAuth, requireRole("provider"), async (req, r
 providersRouter.get("/:id", async (req, res) => {
   const id = parse(z.coerce.number().int().positive(), req.params.id);
   const [row] = await db
-    .select({ ...providerColumns, phone: users.phone })
+    .select({ ...providerColumns, bio: providers.bio, phone: users.phone })
     .from(providers)
     .innerJoin(users, eq(users.id, providers.userId))
     .innerJoin(categories, eq(categories.id, providers.categoryId))

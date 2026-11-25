@@ -66,6 +66,8 @@ const registerSchema = z.discriminatedUnion("role", [
     categoryId: z.number().int().positive(),
     city: z.string().trim().min(2).max(100),
     photoUrl: z.url().optional(),
+    yearsOfExperience: z.number().int().min(0).max(60).optional(),
+    bio: z.string().trim().max(1000).optional(),
   }),
 ]);
 
@@ -127,6 +129,8 @@ authRouter.post("/register", async (req, res) => {
         categoryId: body.categoryId,
         city: body.city,
         photoUrl: body.photoUrl,
+        yearsOfExperience: body.yearsOfExperience,
+        bio: body.bio,
       });
     }
     return created;
