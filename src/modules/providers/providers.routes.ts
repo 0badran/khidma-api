@@ -1,11 +1,12 @@
 import { Router } from "express";
-import { and, asc, desc, eq, ilike, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/client.js";
 import { AVATAR_PLACEHOLDER_URL } from "../../config/placeholders.js";
 import { categories, cities, governorates, providers, ratings, users } from "../../db/schema.js";
 import { ageExpr } from "../../lib/age.js";
 import { badRequest, notFound } from "../../lib/errors.js";
+import { escapeLike } from "../../lib/search.js";
 import { parse } from "../../lib/validate.js";
 import { requireAuth, requireRole } from "../../middleware/auth.js";
 
@@ -29,6 +30,15 @@ const listQuery = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(50).default(20),
 });
+
+// q matches the name, and also the phone when q has enough digits.
+// A leading 0 is dropped so 010... also finds numbers saved as +2010...
+function searchFilter(q: string) {
+  const byName = ilike(users.name, `%${escapeLike(q)}%`);
+  const digits = q.replace(/\D/g, "");
+  if (digits.length < 3 || !/^[\d\s+()-]+$/.test(q)) return byName;
+  return or(byName, ilike(users.phone, `%${digits.replace(/^0+/, "")}%`));
+}
 
 const providerColumns = {
   id: providers.userId,
@@ -59,7 +69,7 @@ providersRouter.get("/", async (req, res) => {
     query.categoryId ? eq(providers.categoryId, query.categoryId) : undefined,
     query.cityId ? eq(providers.cityId, query.cityId) : undefined,
     query.governorateId ? eq(cities.governorateId, query.governorateId) : undefined,
-    query.q ? ilike(users.name, `%${query.q}%`) : undefined,
+    query.q ? searchFilter(query.q) : undefined,
   );
   const rows = await db
     .select(providerColumns)
