@@ -22,6 +22,22 @@ function gmailConfig() {
   };
 }
 
+// Google error bodies carry an error code and a description, never the submitted secrets.
+async function describeError(res: Response): Promise<string> {
+  try {
+    const data = (await res.json()) as {
+      error?: string | { status?: string; message?: string };
+      error_description?: string;
+    };
+    if (typeof data.error === "object" && data.error) {
+      return [data.error.status, data.error.message].filter(Boolean).join(": ");
+    }
+    return [data.error, data.error_description].filter(Boolean).join(": ") || "no details";
+  } catch {
+    return "no details";
+  }
+}
+
 async function getAccessToken(cfg: NonNullable<ReturnType<typeof gmailConfig>>): Promise<string> {
   if (cachedToken && cachedToken.expiresAt > Date.now() + 60_000) return cachedToken.value;
 
@@ -36,7 +52,7 @@ async function getAccessToken(cfg: NonNullable<ReturnType<typeof gmailConfig>>):
     }),
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
-  if (!res.ok) throw new Error(`Gmail token request failed with status ${res.status}`);
+  if (!res.ok) throw new Error(`Gmail token request failed with status ${res.status}: ${await describeError(res)}`);
 
   const data = (await res.json()) as { access_token?: string; expires_in?: number };
   if (!data.access_token) throw new Error("Gmail token response had no access_token");
@@ -75,5 +91,5 @@ export async function sendOtpEmail(email: string, code: string): Promise<void> {
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
   if (res.status === 401) cachedToken = null;
-  if (!res.ok) throw new Error(`Gmail send failed with status ${res.status}`);
+  if (!res.ok) throw new Error(`Gmail send failed with status ${res.status}: ${await describeError(res)}`);
 }
