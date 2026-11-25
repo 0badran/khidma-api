@@ -22,6 +22,9 @@ The free Render service sleeps after 15 minutes. The first request after a pause
 | `GET /api/settings/public` | none | `{ "appName": string, "logoUrl": string or null, "maintenanceMode": boolean }` |
 | `GET /api/categories` | none | `{ "categories": [{ "id", "nameAr", "nameEn", "imageUrl", "sortOrder" }] }`. `imageUrl` is never null: a category with no image returns a default placeholder image URL. |
 
+### `GET /api/banners`
+Public. The active hero banners for the home page, in display order. Response: `{ "banners": [{ "id", "imageUrl", "titleAr", "titleEn", "linkUrl", "sortOrder" }] }`. `titleAr`, `titleEn` and `linkUrl` can be null. `linkUrl` is a site path like `/providers` or a full URL. An empty list means the site shows its built-in banners.
+
 ## Sign up and sign in
 
 ### `POST /api/auth/register/request-otp`
@@ -127,11 +130,11 @@ Deletes a rating the signed-in user gave. After that the user can rate the provi
 The app uploads the file straight to Cloudinary. The server only signs the request, so the API secret stays on the server.
 
 ### `POST /api/uploads/sign` (signed in)
-Body: `{ "purpose": "provider" | "category" | "logo" }`. `provider` is for providers (their own profile photo), `category` and `logo` are for admins. Other roles get 403. Returns 503 until Cloudinary is configured on the server.
+Body: `{ "purpose": "provider" | "category" | "logo" | "banner" }`. `provider` is for providers (their own profile photo), `category`, `logo` and `banner` are for admins. Other roles get 403. Returns 503 until Cloudinary is configured on the server.
 Response: `{ "uploadUrl": string, "apiKey": string, "signature": string, "params": { ... } }`.
 
 Then send a `multipart/form-data` POST to `uploadUrl` with these fields: `file` (the image), `api_key` (= `apiKey`), `signature`, and every key in `params` exactly as returned (`timestamp`, `folder`, `allowed_formats`, and for providers `public_id`, `overwrite`, `invalidate`). Do not change or add signed values. The signature is valid for 1 hour.
-Cloudinary replies with JSON that includes `secure_url`. Save that URL with `PATCH /api/providers/me` (`photoUrl`), or the admin category and settings routes (`imageUrl`, `logoUrl`).
+Cloudinary replies with JSON that includes `secure_url`. Save that URL with `PATCH /api/providers/me` (`photoUrl`), or the admin category, banner and settings routes (`imageUrl`, `logoUrl`).
 Allowed formats: jpg, jpeg, png, webp. A provider has one photo: uploading again replaces it (same URL, new version).
 
 ## Admin (role `admin`)
@@ -143,6 +146,10 @@ Admin signs in with the normal login route.
 | `POST /api/admin/categories` | `{ nameAr, nameEn, imageUrl?, sortOrder? }` | 201 `{ category }` |
 | `PATCH /api/admin/categories/:id` | any of the same fields | `{ category }` |
 | `DELETE /api/admin/categories/:id` | none | `{ ok }`. 409 if providers use it |
+| `GET /api/admin/banners` | none | `{ banners: [{ id, imageUrl, titleAr, titleEn, linkUrl, sortOrder, isActive }] }`, including inactive ones |
+| `POST /api/admin/banners` | `{ imageUrl (url), titleAr?, titleEn?, linkUrl?, sortOrder?, isActive? }` | 201 `{ banner }` |
+| `PATCH /api/admin/banners/:id` | any of the same fields | `{ banner }` |
+| `DELETE /api/admin/banners/:id` | none | `{ ok }` |
 | `GET /api/admin/providers` | `page`, `limit` (max 100) | `{ providers: [{ id, name, phone, email, age, cityId, cityNameAr, cityNameEn, governorateId, categoryId, photoUrl, yearsOfExperience, bio, isActive, hiddenAt }], page, limit }` |
 | `PATCH /api/admin/providers/:id/active` | `{ isActive: boolean }` | `{ ok }` |
 | `GET /api/admin/customers` | `page`, `limit` | `{ customers: [{ id, name, phone, email, age, hiddenAt, createdAt }], page, limit }` |

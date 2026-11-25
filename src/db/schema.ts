@@ -17,6 +17,16 @@ import {
 export const roleEnum = pgEnum("role", ["customer", "provider", "admin"]);
 export const otpPurposeEnum = pgEnum("otp_purpose", ["register", "reset_password", "change_email"]);
 
+export const banners = pgTable("banners", {
+  id: serial("id").primaryKey(),
+  imageUrl: text("image_url").notNull(),
+  titleAr: text("title_ar"),
+  titleEn: text("title_en"),
+  linkUrl: text("link_url"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  isActive: boolean("is_active").notNull().default(true),
+});
+
 export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
   nameAr: text("name_ar").notNull(),

@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { count, desc, eq } from "drizzle-orm";
+import { asc, count, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/client.js";
-import { categories, cities, providers, users } from "../../db/schema.js";
+import { banners, categories, cities, providers, users } from "../../db/schema.js";
 import { ageExpr } from "../../lib/age.js";
 import { conflict, notFound } from "../../lib/errors.js";
 import { parse } from "../../lib/validate.js";
@@ -46,6 +46,41 @@ adminRouter.delete("/categories/:id", async (req, res) => {
   if (used && used.n > 0) throw conflict();
   const [deleted] = await db.delete(categories).where(eq(categories.id, id)).returning({ id: categories.id });
   if (!deleted) throw notFound("errors.categoryNotFound");
+  res.json({ ok: true });
+});
+
+const bannerSchema = z.object({
+  imageUrl: z.url(),
+  titleAr: z.string().trim().min(1).max(150).nullable().optional(),
+  titleEn: z.string().trim().min(1).max(150).nullable().optional(),
+  linkUrl: z.string().trim().max(500).nullable().optional(),
+  sortOrder: z.number().int().default(0),
+  isActive: z.boolean().default(true),
+});
+
+adminRouter.get("/banners", async (_req, res) => {
+  const rows = await db.select().from(banners).orderBy(asc(banners.sortOrder), asc(banners.id));
+  res.json({ banners: rows });
+});
+
+adminRouter.post("/banners", async (req, res) => {
+  const body = parse(bannerSchema, req.body);
+  const [created] = await db.insert(banners).values(body).returning();
+  res.status(201).json({ banner: created });
+});
+
+adminRouter.patch("/banners/:id", async (req, res) => {
+  const id = parse(idSchema, req.params.id);
+  const body = parse(bannerSchema.partial().refine((v) => Object.keys(v).length > 0), req.body);
+  const [updated] = await db.update(banners).set(body).where(eq(banners.id, id)).returning();
+  if (!updated) throw notFound("errors.bannerNotFound");
+  res.json({ banner: updated });
+});
+
+adminRouter.delete("/banners/:id", async (req, res) => {
+  const id = parse(idSchema, req.params.id);
+  const [deleted] = await db.delete(banners).where(eq(banners.id, id)).returning({ id: banners.id });
+  if (!deleted) throw notFound("errors.bannerNotFound");
   res.json({ ok: true });
 });
 

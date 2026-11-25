@@ -7,7 +7,7 @@ import { requireAuth } from "../../middleware/auth.js";
 
 export const uploadsRouter = Router();
 
-const bodySchema = z.object({ purpose: z.enum(["provider", "category", "logo"]) });
+const bodySchema = z.object({ purpose: z.enum(["provider", "category", "logo", "banner"]) });
 
 // The app uploads the file straight to Cloudinary with these signed parameters.
 // The server never handles the image bytes, and the API secret never leaves the server.

@@ -5,6 +5,7 @@ import { errorHandler } from "./middleware/error.js";
 import { maintenanceGuard } from "./middleware/maintenance.js";
 import { adminRouter } from "./modules/admin/admin.routes.js";
 import { authRouter } from "./modules/auth/auth.routes.js";
+import { bannersRouter } from "./modules/banners/banners.routes.js";
 import { categoriesRouter } from "./modules/categories/categories.routes.js";
 import { customersRouter } from "./modules/customers/customers.routes.js";
 import { locationsRouter } from "./modules/locations/locations.routes.js";
@@ -26,6 +27,7 @@ app.get("/health", (_req, res) => {
 app.use(maintenanceGuard);
 app.use("/api/auth", authRouter);
 app.use("/api/categories", categoriesRouter);
+app.use("/api/banners", bannersRouter);
 app.use("/api", locationsRouter);
 app.use("/api/providers/:id/ratings", ratingsRouter);
 app.use("/api/providers", providersRouter);
