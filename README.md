@@ -7,7 +7,7 @@ Backend for the khidma home-services directory. Node (LTS), Express, TypeScript,
 1. Copy `.env.example` to `.env` and fill in values.
 2. `npm install`
 3. `npm run db:generate` (only after schema changes), then `npm run db:migrate`
-4. `npm run seed` (placeholder categories, default settings, admin from `ADMIN_EMAIL` and `ADMIN_PASSWORD`)
+4. `npm run seed` (placeholder categories, governorates and cities, default settings, admin from `ADMIN_EMAIL` and `ADMIN_PASSWORD`)
 5. `npm run dev`
 
 ## Scripts

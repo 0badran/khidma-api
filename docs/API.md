@@ -47,6 +47,21 @@ Response: `{ "user": { "id", "role", "name", "phone", "email", "birthDate" } }`.
 ### `DELETE /api/auth/me` (customer or provider)
 Hides the account. It is deleted after 30 days without sign-in, and signing in again restores it. Response: `{ "message": string }`. Admin gets 403.
 
+## Locations
+
+Public, no sign-in. 27 governorates and 396 cities (Arabic and English), one governorate to many cities.
+
+### `GET /api/governorates`
+Response: `{ "governorates": [{ "id", "nameAr", "nameEn" }] }`.
+
+### `GET /api/governorates/:id/cities`
+Response: `{ "governorate": { "id", "nameAr", "nameEn" }, "cities": [{ "id", "governorateId", "nameAr", "nameEn" }] }`. 404 for an unknown governorate.
+
+### `GET /api/cities`
+Optional query `governorateId`. Response: `{ "cities": [City] }`.
+
+Providers still store `city` as free text. It is not linked to these tables yet.
+
 ## Providers
 
 ### `GET /api/providers`

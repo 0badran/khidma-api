@@ -24,6 +24,29 @@ export const categories = pgTable("categories", {
   sortOrder: integer("sort_order").notNull().default(0),
 });
 
+export const governorates = pgTable("governorates", {
+  id: serial("id").primaryKey(),
+  nameAr: text("name_ar").notNull().unique(),
+  nameEn: text("name_en").notNull().unique(),
+});
+
+// One governorate has many cities; each city belongs to exactly one governorate.
+export const cities = pgTable(
+  "cities",
+  {
+    id: serial("id").primaryKey(),
+    governorateId: integer("governorate_id")
+      .notNull()
+      .references(() => governorates.id),
+    nameAr: text("name_ar").notNull(),
+    nameEn: text("name_en").notNull(),
+  },
+  (t) => [
+    unique("cities_governorate_name_ar_unique").on(t.governorateId, t.nameAr),
+    index("cities_governorate_idx").on(t.governorateId),
+  ],
+);
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   role: roleEnum("role").notNull(),
