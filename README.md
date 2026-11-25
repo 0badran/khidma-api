@@ -18,6 +18,6 @@ Backend for the khidma home-services directory. Node (LTS), Express, TypeScript,
 
 - Registration needs an email OTP. With the four `GMAIL_*` variables set, the code is sent through the Gmail API. Without them it is printed to the server console.
 - Deleting an account hides it. A background job removes accounts hidden for 30 days (see `src/jobs`).
-- Images (category, provider, logo) are stored as URLs. Upload and storage are not set up yet.
+- Images (category, provider, logo) are stored as URLs. Upload goes straight to Cloudinary with a signature from `POST /api/uploads/sign` (needs the three `CLOUDINARY_*` variables).
 - API reference: `docs/API.md`.
 - The language comes from the `Accept-Language` header (`ar` or `en`).

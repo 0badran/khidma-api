@@ -10,6 +10,9 @@ const schema = z.object({
   GMAIL_CLIENT_SECRET: z.string().min(1).optional(),
   GMAIL_REFRESH_TOKEN: z.string().min(1).optional(),
   GMAIL_SENDER: z.email().optional(),
+  CLOUDINARY_CLOUD_NAME: z.string().min(1).optional(),
+  CLOUDINARY_API_KEY: z.string().min(1).optional(),
+  CLOUDINARY_API_SECRET: z.string().min(1).optional(),
 });
 
 export const env = schema.parse(process.env);

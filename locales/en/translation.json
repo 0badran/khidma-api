@@ -16,7 +16,8 @@
     "emailNotVerified": "Verify your email first.",
     "alreadyRated": "You already rated this provider with this phone number.",
     "categoryNotFound": "Category not found.",
-    "providerNotFound": "Provider not found."
+    "providerNotFound": "Provider not found.",
+    "uploadsUnavailable": "Image upload is not set up yet."
   },
   "messages": {
     "otpSent": "A verification code was sent to your email. If you do not see it, check your spam folder.",

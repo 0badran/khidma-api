@@ -7,12 +7,12 @@ The free Render service sleeps after 15 minutes. The first request after a pause
 
 - JSON in, JSON out. Send `Content-Type: application/json`. Body limit is 100 KB.
 - Language: send `Accept-Language: ar` or `en`. Error and message texts follow it.
-- Auth: `Authorization: Bearer <token>`. The token comes from register or login. Roles: `customer`, `provider`, `admin`.
+- Auth: `Authorization: Bearer <token>`. The token comes from register or login. Roles: `customer`, `provider`, `admin`. Tokens last 30 days.
 - Errors: `{ "error": { "message": "..." } }`. Validation errors (400) also carry `"fields": { "<field>": ["..."] }`.
 - Status codes: 400 invalid input or wrong code, 401 not signed in or wrong credentials, 403 wrong role, 404 not found, 409 already exists, 429 too many requests or attempts, 503 maintenance.
 - Maintenance mode: while on, every route returns 503 except `/health`, `POST /api/auth/login`, `GET /api/settings/public` and `/api/admin/*`. Only admins can sign in.
 - Phone format: 8 to 15 digits, optional leading `+`. Dates: `YYYY-MM-DD`. Emails are lowercased by the server.
-- Image fields are plain URLs for now.
+- Image fields are plain URLs. Upload the file to Cloudinary (see Image upload), then send the returned `secure_url`.
 
 ## Health and settings
 
@@ -73,6 +73,18 @@ Works signed in or as a guest. Body: `{ "stars": 1-5, "comment"?: string (max 10
 Signed-in customers use their own name and phone. Guests must send `name` and `phone`.
 One rating per provider per phone number (409 on repeat). Rating your own number gives 400.
 Response 201: `{ "id" }`.
+
+## Image upload
+
+The app uploads the file straight to Cloudinary. The server only signs the request, so the API secret stays on the server.
+
+### `POST /api/uploads/sign` (signed in)
+Body: `{ "purpose": "provider" | "category" | "logo" }`. `provider` is for providers (their own profile photo), `category` and `logo` are for admins. Other roles get 403. Returns 503 until Cloudinary is configured on the server.
+Response: `{ "uploadUrl": string, "apiKey": string, "signature": string, "params": { ... } }`.
+
+Then send a `multipart/form-data` POST to `uploadUrl` with these fields: `file` (the image), `api_key` (= `apiKey`), `signature`, and every key in `params` exactly as returned (`timestamp`, `folder`, `allowed_formats`, and for providers `public_id`, `overwrite`, `invalidate`). Do not change or add signed values. The signature is valid for 1 hour.
+Cloudinary replies with JSON that includes `secure_url`. Save that URL with `PATCH /api/providers/me` (`photoUrl`), or the admin category and settings routes (`imageUrl`, `logoUrl`).
+Allowed formats: jpg, jpeg, png, webp. A provider has one photo: uploading again replaces it (same URL, new version).
 
 ## Admin (role `admin`)
 

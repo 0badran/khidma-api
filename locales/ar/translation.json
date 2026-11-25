@@ -16,7 +16,8 @@
     "emailNotVerified": "فعّل الإيميل أولًا.",
     "alreadyRated": "لقد قيّمت هذا الفني بهذا الرقم من قبل.",
     "categoryNotFound": "القسم غير موجود.",
-    "providerNotFound": "الفني غير موجود."
+    "providerNotFound": "الفني غير موجود.",
+    "uploadsUnavailable": "رفع الصور غير مفعّل حاليًا."
   },
   "messages": {
     "otpSent": "تم إرسال كود التحقق إلى بريدك الإلكتروني. إذا لم تجده، تحقق من مجلد الرسائل غير المرغوب فيها (Spam).",
