@@ -52,6 +52,7 @@ Hides the account. It is deleted after 30 days without sign-in, and signing in a
 Public, no sign-in. 27 governorates and 396 cities (Arabic and English), one governorate to many cities.
 
 ### `GET /api/governorates`
+Search ignores Arabic letter variants (أ إ آ = ا, ى = ي, ة = ه) and diacritics.
 Optional `q`: governorates whose Arabic or English name contains it (case-insensitive).
 Response: `{ "governorates": [{ "id", "nameAr", "nameEn" }] }`.
 
@@ -64,7 +65,7 @@ Each provider has a `cityId`. The city gives the governorate.
 ## Providers
 
 ### `GET /api/providers`
-Public list, best rated first. Query: `categoryId`, `cityId`, `governorateId`, `q` (name contains, or phone contains when q is 3+ digits; 010... also finds +2010...), `page` (default 1), `limit` (default 20, max 50).
+Public list, best rated first. Query: `categoryId`, `cityId`, `governorateId`, `q` (name contains, ignoring Arabic letter variants and diacritics, or phone contains when q is 3+ digits; 010... also finds +2010...), `page` (default 1), `limit` (default 20, max 50).
 Response: `{ "providers": [Provider], "page", "limit" }`.
 Provider item: `{ "id", "name", "age", "cityId", "cityNameAr", "cityNameEn", "governorateId", "governorateNameAr", "governorateNameEn", "photoUrl", "yearsOfExperience", "categoryId", "categoryNameAr", "categoryNameEn", "avgRating", "ratingsCount" }`. `avgRating` is null with no ratings. `photoUrl` is never null on public routes: a provider with no photo returns a default placeholder image URL (admin routes show the stored value, which can be null).
 

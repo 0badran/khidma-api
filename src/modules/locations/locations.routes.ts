@@ -1,10 +1,10 @@
 import { Router } from "express";
-import { and, asc, eq, ilike, or, type AnyColumn } from "drizzle-orm";
+import { and, asc, eq, or, type AnyColumn } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/client.js";
 import { cities, governorates } from "../../db/schema.js";
 import { notFound } from "../../lib/errors.js";
-import { escapeLike } from "../../lib/search.js";
+import { containsFolded } from "../../lib/search.js";
 import { parse } from "../../lib/validate.js";
 
 export const locationsRouter = Router();
@@ -13,7 +13,7 @@ const searchQuery = z.object({ q: z.string().trim().min(1).optional() });
 
 // Matches the Arabic or English name.
 const nameMatch = (nameAr: AnyColumn, nameEn: AnyColumn, q: string) =>
-  or(ilike(nameAr, `%${escapeLike(q)}%`), ilike(nameEn, `%${escapeLike(q)}%`));
+  or(containsFolded(nameAr, q), containsFolded(nameEn, q));
 
 const cityColumns = {
   id: cities.id,

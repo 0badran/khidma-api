@@ -6,7 +6,7 @@ import { AVATAR_PLACEHOLDER_URL } from "../../config/placeholders.js";
 import { categories, cities, governorates, providers, ratings, users } from "../../db/schema.js";
 import { ageExpr } from "../../lib/age.js";
 import { badRequest, notFound } from "../../lib/errors.js";
-import { escapeLike } from "../../lib/search.js";
+import { containsFolded } from "../../lib/search.js";
 import { parse } from "../../lib/validate.js";
 import { requireAuth, requireRole } from "../../middleware/auth.js";
 
@@ -34,7 +34,7 @@ const listQuery = z.object({
 // q matches the name, and also the phone when q has enough digits.
 // A leading 0 is dropped so 010... also finds numbers saved as +2010...
 function searchFilter(q: string) {
-  const byName = ilike(users.name, `%${escapeLike(q)}%`);
+  const byName = containsFolded(users.name, q);
   const digits = q.replace(/\D/g, "");
   if (digits.length < 3 || !/^[\d\s+()-]+$/.test(q)) return byName;
   return or(byName, ilike(users.phone, `%${digits.replace(/^0+/, "")}%`));
