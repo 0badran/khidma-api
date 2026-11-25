@@ -18,13 +18,21 @@
     "categoryNotFound": "Category not found.",
     "cityNotFound": "City not found.",
     "providerNotFound": "Provider not found.",
-    "uploadsUnavailable": "Image upload is not set up yet."
+    "uploadsUnavailable": "Image upload is not set up yet.",
+    "refreshInvalid": "Your session ended. Please sign in again.",
+    "currentPasswordWrong": "The current password is wrong.",
+    "ratingNotFound": "Rating not found."
   },
   "messages": {
     "otpSent": "A verification code was sent to your email. If you do not see it, check your spam folder.",
     "resetOtpSent": "If the email has an account, a password reset code was sent to it. If you do not see it, check your spam folder.",
     "passwordReset": "Your password was changed. Sign in with the new password.",
     "accountHidden": "Your account is hidden and will be deleted after 30 days without sign-in.",
-    "accountRestored": "Welcome back. Your account is active again."
+    "accountRestored": "Welcome back. Your account is active again.",
+    "loggedOut": "Signed out.",
+    "passwordChanged": "Your password was changed. Other devices were signed out.",
+    "emailChanged": "Your email was changed.",
+    "phoneChanged": "Your phone number was changed.",
+    "ratingDeleted": "Your rating was deleted."
   }
 }

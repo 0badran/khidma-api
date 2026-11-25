@@ -1,4 +1,4 @@
-import { createHmac, randomInt, scrypt, timingSafeEqual, randomBytes } from "node:crypto";
+import { createHash, createHmac, randomInt, scrypt, timingSafeEqual, randomBytes } from "node:crypto";
 import { promisify } from "node:util";
 import { env } from "../config/env.js";
 
@@ -29,9 +29,19 @@ export function hashOtp(email: string, code: string): string {
 export interface TokenPayload {
   sub: number;
   role: "customer" | "provider" | "admin";
+  sid: string;
 }
 
-const TOKEN_TTL_SECONDS = 60 * 60 * 24 * 30;
+export const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
+export const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+export function generateRefreshToken(): string {
+  return randomBytes(32).toString("base64url");
+}
+
+export function hashRefreshToken(token: string): string {
+  return createHash("sha256").update(token).digest("hex");
+}
 
 function sign(data: string): string {
   return createHmac("sha256", env.JWT_SECRET).update(data).digest("base64url");
@@ -39,7 +49,7 @@ function sign(data: string): string {
 
 export function createToken(payload: TokenPayload): string {
   const header = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url");
-  const exp = Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS;
+  const exp = Math.floor(Date.now() / 1000) + ACCESS_TOKEN_TTL_SECONDS;
   const body = Buffer.from(JSON.stringify({ ...payload, exp })).toString("base64url");
   return `${header}.${body}.${sign(`${header}.${body}`)}`;
 }
@@ -54,7 +64,8 @@ export function verifyToken(token: string): TokenPayload | null {
   try {
     const data = JSON.parse(Buffer.from(body, "base64url").toString()) as TokenPayload & { exp: number };
     if (data.exp < Math.floor(Date.now() / 1000)) return null;
-    return { sub: data.sub, role: data.role };
+    if (typeof data.sid !== "string") return null;
+    return { sub: data.sub, role: data.role, sid: data.sid };
   } catch {
     return null;
   }

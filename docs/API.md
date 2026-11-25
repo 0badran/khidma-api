@@ -33,12 +33,12 @@ Checks the code and creates the account. Codes work once, with 5 wrong attempts 
 Customer body: `{ "role": "customer", "name", "phone", "email", "password", "birthDate", "otp" }`.
 Provider body: same plus `"categoryId": number`, `"cityId": number` (from `GET /api/governorates/:id/cities`), optional `"photoUrl": url`, optional `"yearsOfExperience": whole number 0 to 60`, optional `"bio": text up to 1000 characters`.
 Limits: name 2 to 100 characters, password 8 to 128 characters, otp is exactly 6 digits.
-Response 201: `{ "token": string, "user": { "id", "role" } }`.
+Response 201: `{ "token", "refreshToken", "expiresIn": 900, "user": { "id", "role" } }`. `token` is the access token (15 minutes). Send it as `Authorization: Bearer`. See "Sessions" below.
 Errors: 400 wrong or expired code or unknown category or city, 409 phone or email taken, 429 too many wrong codes.
 
 ### `POST /api/auth/login`
 Body: `{ "identifier": string, "password": string }`. `identifier` is the email or the phone.
-Response 200: `{ "token", "user": { "id", "role", "name" }, "message"? }`. `message` appears when a hidden account was restored by signing in.
+Response 200: `{ "token", "refreshToken", "expiresIn": 900, "user": { "id", "role", "name" }, "message"? }`. `message` appears when a hidden account was restored by signing in.
 Errors: 401 wrong credentials, 503 maintenance (non-admin).
 
 ### `GET /api/auth/me` (any signed-in user)
@@ -48,7 +48,28 @@ Response: `{ "user": { "id", "role", "name", "phone", "email", "birthDate" }, "p
 Body: `{ "email": string }`. If the email has an account, sends a 6-digit reset code (valid 10 minutes). Always answers 200 `{ "message" }` the same way, so it does not reveal which emails are registered. Asking again within 60 seconds sends nothing new.
 
 ### `POST /api/auth/forgot-password/reset`
-Body: `{ "email", "otp" (6 digits), "newPassword" (8 to 128 characters) }`. Codes work once, 5 wrong attempts allowed. Response 200: `{ "message" }`. Errors: 400 wrong or expired code, 429 too many wrong codes. It does not sign the user in: call login afterwards. Existing tokens stay valid until they expire (30 days).
+Body: `{ "email", "otp" (6 digits), "newPassword" (8 to 128 characters) }`. Codes work once, 5 wrong attempts allowed. Response 200: `{ "message" }`. Errors: 400 wrong or expired code, 429 too many wrong codes. It does not sign the user in: call login afterwards. Every session of that user is ended.
+
+### Sessions
+The access token lasts 15 minutes. The refresh token lasts 30 days, counted from its last use, and works once.
+
+#### `POST /api/auth/refresh`
+Body: `{ "refreshToken" }`. Response 200: `{ "token", "refreshToken", "expiresIn" }`. Store the new refresh token, the old one stops working. Sending an old refresh token again ends the whole session. Error: 401 (sign in again).
+
+#### `POST /api/auth/logout`
+Body (optional): `{ "refreshToken" }`. With the access token header, the refresh token, or both. Ends the session on the server at once, so the access token stops working too. Always 200 `{ "message" }`.
+
+#### `POST /api/auth/change-password` (signed in)
+Body: `{ "currentPassword", "newPassword" (8 to 128) }`. Response 200 `{ "message" }`. Signs out every other session, this one stays. Error: 400 wrong current password.
+
+#### `POST /api/auth/change-email/request-otp` (signed in)
+Body: `{ "newEmail", "password" }`. Sends a 6-digit code to the new address (valid 10 minutes, one per 60 seconds). Errors: 400 wrong password, 409 email taken, 429.
+
+#### `POST /api/auth/change-email` (signed in)
+Body: `{ "newEmail", "otp" }`. Response 200 `{ "message", "email" }`. Errors: 400 wrong or expired code, 409 taken, 429 too many wrong codes.
+
+#### `POST /api/auth/change-phone` (signed in)
+Body: `{ "newPhone", "password" }`. The phone is not verified, so only the password is needed. Response 200 `{ "message", "phone" }`. Errors: 400 wrong password, 409 phone taken.
 
 ## CORS
 Browsers may call the API directly. Set `CORS_ORIGINS` (comma-separated, for example `https://khidma.example`) to allow only those origins. Unset, any origin is allowed. Auth is the `Authorization: Bearer` header, so cookies are not sent cross-origin (no credentials).
@@ -97,6 +118,9 @@ Works signed in or as a guest. Body: `{ "stars": 1-5, "comment"?: string (max 10
 Signed-in customers use their own name and phone. Guests must send `name` and `phone`.
 One rating per provider per phone number (409 on repeat). Rating your own number gives 400.
 Response 201: `{ "id" }`.
+
+### `DELETE /api/providers/:id/ratings/:ratingId` (signed in)
+Deletes a rating the signed-in user gave. After that the user can rate the provider again. Guest ratings have no owner and cannot be deleted. Response 200 `{ "message" }`. Errors: 401, 404 (not found or not yours).
 
 ## Image upload
 

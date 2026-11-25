@@ -1,7 +1,7 @@
 import type { RequestHandler } from "express";
-import { eq } from "drizzle-orm";
+import { and, eq, gt, isNull } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { users } from "../db/schema.js";
+import { sessions, users } from "../db/schema.js";
 import { forbidden, unauthorized } from "../lib/errors.js";
 import { verifyToken } from "../lib/security.js";
 
@@ -9,12 +9,20 @@ export async function loadAuth(header: string | undefined) {
   if (!header?.startsWith("Bearer ")) return undefined;
   const payload = verifyToken(header.slice(7));
   if (!payload) return undefined;
-  const [user] = await db
+  const [row] = await db
     .select({ id: users.id, role: users.role, hiddenAt: users.hiddenAt })
-    .from(users)
-    .where(eq(users.id, payload.sub));
-  if (!user || user.hiddenAt) return undefined;
-  return { id: user.id, role: user.role };
+    .from(sessions)
+    .innerJoin(users, eq(users.id, sessions.userId))
+    .where(
+      and(
+        eq(sessions.id, payload.sid),
+        eq(sessions.userId, payload.sub),
+        isNull(sessions.revokedAt),
+        gt(sessions.expiresAt, new Date()),
+      ),
+    );
+  if (!row || row.hiddenAt) return undefined;
+  return { id: row.id, role: row.role, sid: payload.sid };
 }
 
 export const optionalAuth: RequestHandler = async (req, _res, next) => {

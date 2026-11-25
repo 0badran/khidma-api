@@ -1,6 +1,6 @@
-import { and, isNotNull, lt, ne } from "drizzle-orm";
+import { and, isNotNull, lt, ne, or } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { users } from "../db/schema.js";
+import { sessions, users } from "../db/schema.js";
 
 const RETENTION_DAYS = 30;
 const RUN_EVERY_MS = 6 * 60 * 60 * 1000;
@@ -12,6 +12,8 @@ export async function purgeHiddenAccounts(now = new Date()): Promise<number> {
     .delete(users)
     .where(and(isNotNull(users.hiddenAt), lt(users.hiddenAt, cutoff), ne(users.role, "admin")))
     .returning({ id: users.id });
+  // Expired and revoked sessions are useless; drop the old ones.
+  await db.delete(sessions).where(or(lt(sessions.expiresAt, now), lt(sessions.revokedAt, cutoff)));
   return deleted.length;
 }
 

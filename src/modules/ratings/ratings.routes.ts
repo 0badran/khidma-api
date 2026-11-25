@@ -5,7 +5,7 @@ import { db } from "../../db/client.js";
 import { providers, ratings, users } from "../../db/schema.js";
 import { badRequest, conflict, notFound } from "../../lib/errors.js";
 import { parse, phoneRegex } from "../../lib/validate.js";
-import { optionalAuth } from "../../middleware/auth.js";
+import { optionalAuth, requireAuth } from "../../middleware/auth.js";
 
 export const ratingsRouter = Router({ mergeParams: true });
 
@@ -75,6 +75,18 @@ ratingsRouter.post("/", optionalAuth, async (req, res) => {
     if (isUniqueViolation(err)) throw conflict("errors.alreadyRated");
     throw err;
   }
+});
+
+// A signed-in user can delete a rating they gave. Guest ratings have no owner, so they cannot be deleted here.
+ratingsRouter.delete("/:ratingId", requireAuth, async (req, res) => {
+  const providerId = parse(idSchema, (req.params as { id?: string }).id);
+  const ratingId = parse(idSchema, (req.params as { ratingId?: string }).ratingId);
+  const deleted = await db
+    .delete(ratings)
+    .where(and(eq(ratings.id, ratingId), eq(ratings.providerId, providerId), eq(ratings.userId, req.auth!.id)))
+    .returning({ id: ratings.id });
+  if (deleted.length === 0) throw notFound("errors.ratingNotFound");
+  res.json({ message: req.t("messages.ratingDeleted") });
 });
 
 function isUniqueViolation(err: unknown): boolean {

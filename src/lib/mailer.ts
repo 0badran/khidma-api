@@ -60,14 +60,17 @@ async function getAccessToken(cfg: NonNullable<ReturnType<typeof gmailConfig>>):
   return data.access_token;
 }
 
-export type OtpPurpose = "register" | "reset_password";
+export type OtpPurpose = "register" | "reset_password" | "change_email";
 
 export function buildMessage(from: string, to: string, code: string, purpose: OtpPurpose = "register"): string {
   const reset = purpose === "reset_password";
+  const change = purpose === "change_email";
   const subject = reset ? "Your Khidma password reset code" : "Your Khidma verification code";
   const body = reset
     ? `Your Khidma password reset code is ${code}\r\n\r\nIt expires in 10 minutes. If you did not request it, ignore this email. Your password has not changed.\r\n`
-    : `Your Khidma verification code is ${code}\r\n\r\nIt expires in 10 minutes. If you did not request it, ignore this email.\r\n`;
+    : change
+      ? `Your Khidma code to confirm this email address is ${code}\r\n\r\nIt expires in 10 minutes. If you did not request it, ignore this email. Nothing will change.\r\n`
+      : `Your Khidma verification code is ${code}\r\n\r\nIt expires in 10 minutes. If you did not request it, ignore this email.\r\n`;
   return [
     `From: Khidma <${from}>`,
     `To: ${to}`,

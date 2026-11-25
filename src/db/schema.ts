@@ -11,10 +11,11 @@ import {
   text,
   timestamp,
   unique,
+  uuid,
 } from "drizzle-orm/pg-core";
 
 export const roleEnum = pgEnum("role", ["customer", "provider", "admin"]);
-export const otpPurposeEnum = pgEnum("otp_purpose", ["register", "reset_password"]);
+export const otpPurposeEnum = pgEnum("otp_purpose", ["register", "reset_password", "change_email"]);
 
 export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
@@ -101,6 +102,24 @@ export const ratings = pgTable(
     unique("ratings_provider_phone_unique").on(t.providerId, t.raterPhone),
     check("ratings_stars_range", sql`${t.stars} between 1 and 5`),
   ],
+);
+
+// One row per sign-in. The access token carries the row id, so revoking the row ends the token at once.
+export const sessions = pgTable(
+  "sessions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    // SHA-256 of the current refresh token, and of the one before it (to detect reuse).
+    refreshHash: text("refresh_hash").notNull().unique(),
+    prevRefreshHash: text("prev_refresh_hash"),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("sessions_user_idx").on(t.userId), index("sessions_prev_refresh_idx").on(t.prevRefreshHash)],
 );
 
 export const settings = pgTable("settings", {
