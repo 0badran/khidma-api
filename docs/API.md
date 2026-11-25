@@ -31,7 +31,7 @@ Errors: 409 email already registered, 429 asked again within 60 seconds. The mai
 ### `POST /api/auth/register`
 Checks the code and creates the account. Codes work once, with 5 wrong attempts allowed.
 Customer body: `{ "role": "customer", "name", "phone", "email", "password", "birthDate", "otp" }`.
-Provider body: same plus `"categoryId": number`, `"cityId": number` (from `GET /api/cities`), optional `"photoUrl": url`, optional `"yearsOfExperience": whole number 0 to 60`, optional `"bio": text up to 1000 characters`.
+Provider body: same plus `"categoryId": number`, `"cityId": number` (from `GET /api/governorates/:id/cities`), optional `"photoUrl": url`, optional `"yearsOfExperience": whole number 0 to 60`, optional `"bio": text up to 1000 characters`.
 Limits: name 2 to 100 characters, password 8 to 128 characters, otp is exactly 6 digits.
 Response 201: `{ "token": string, "user": { "id", "role" } }`.
 Errors: 400 wrong or expired code or unknown category or city, 409 phone or email taken, 429 too many wrong codes.
@@ -56,9 +56,6 @@ Response: `{ "governorates": [{ "id", "nameAr", "nameEn" }] }`.
 
 ### `GET /api/governorates/:id/cities`
 Response: `{ "governorate": { "id", "nameAr", "nameEn" }, "cities": [{ "id", "governorateId", "nameAr", "nameEn" }] }`. 404 for an unknown governorate.
-
-### `GET /api/cities`
-Optional query `governorateId`. Response: `{ "cities": [City] }`.
 
 Each provider has a `cityId`. The city gives the governorate.
 

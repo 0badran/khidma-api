@@ -29,14 +29,3 @@ locationsRouter.get("/governorates/:id/cities", async (req, res) => {
   const rows = await db.select(cityColumns).from(cities).where(eq(cities.governorateId, id)).orderBy(asc(cities.id));
   res.json({ governorate: gov, cities: rows });
 });
-
-// All cities, optionally of one governorate.
-locationsRouter.get("/cities", async (req, res) => {
-  const query = parse(z.object({ governorateId: z.coerce.number().int().positive().optional() }), req.query);
-  const q = db.select(cityColumns).from(cities);
-  const rows = await (query.governorateId ? q.where(eq(cities.governorateId, query.governorateId)) : q).orderBy(
-    asc(cities.governorateId),
-    asc(cities.id),
-  );
-  res.json({ cities: rows });
-});
