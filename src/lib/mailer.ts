@@ -60,9 +60,14 @@ async function getAccessToken(cfg: NonNullable<ReturnType<typeof gmailConfig>>):
   return data.access_token;
 }
 
-export function buildMessage(from: string, to: string, code: string): string {
-  const subject = "Your Khidma verification code";
-  const body = `Your Khidma verification code is ${code}\r\n\r\nIt expires in 10 minutes. If you did not request it, ignore this email.\r\n`;
+export type OtpPurpose = "register" | "reset_password";
+
+export function buildMessage(from: string, to: string, code: string, purpose: OtpPurpose = "register"): string {
+  const reset = purpose === "reset_password";
+  const subject = reset ? "Your Khidma password reset code" : "Your Khidma verification code";
+  const body = reset
+    ? `Your Khidma password reset code is ${code}\r\n\r\nIt expires in 10 minutes. If you did not request it, ignore this email. Your password has not changed.\r\n`
+    : `Your Khidma verification code is ${code}\r\n\r\nIt expires in 10 minutes. If you did not request it, ignore this email.\r\n`;
   return [
     `From: Khidma <${from}>`,
     `To: ${to}`,
@@ -75,14 +80,14 @@ export function buildMessage(from: string, to: string, code: string): string {
   ].join("\r\n");
 }
 
-export async function sendOtpEmail(email: string, code: string): Promise<void> {
+export async function sendOtpEmail(email: string, code: string, purpose: OtpPurpose = "register"): Promise<void> {
   const cfg = gmailConfig();
   if (!cfg) {
     console.log(`[mailer] OTP for ${email}: ${code}`);
     return;
   }
 
-  const raw = Buffer.from(buildMessage(cfg.sender, email, code), "utf8").toString("base64url");
+  const raw = Buffer.from(buildMessage(cfg.sender, email, code, purpose), "utf8").toString("base64url");
   const token = await getAccessToken(cfg);
   const res = await fetch(SEND_URL, {
     method: "POST",

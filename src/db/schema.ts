@@ -14,7 +14,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 export const roleEnum = pgEnum("role", ["customer", "provider", "admin"]);
-export const otpPurposeEnum = pgEnum("otp_purpose", ["register"]);
+export const otpPurposeEnum = pgEnum("otp_purpose", ["register", "reset_password"]);
 
 export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),

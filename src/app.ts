@@ -1,4 +1,5 @@
 import express from "express";
+import { cors } from "./middleware/cors.js";
 import { i18nMiddleware } from "./i18n/index.js";
 import { errorHandler } from "./middleware/error.js";
 import { maintenanceGuard } from "./middleware/maintenance.js";
@@ -14,6 +15,7 @@ import { settingsRouter } from "./modules/settings/settings.routes.js";
 
 export const app = express();
 
+app.use(cors);
 app.use(express.json({ limit: "100kb" }));
 app.use(i18nMiddleware);
 

@@ -1,0 +1,37 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "3f18a3c9-3b76-4f3d-a782-30178254813f",
+  "prevIds": [
+    "8a462f37-618a-44d0-ba1a-c7fa07b35187"
+  ],
+  "footprints": [
+    {
+      "statementType": "alter_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "otp_purpose"
+      ],
+      "writes": [
+        "s|enum|public.otp_purpose"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "alter",
+      "key": "enums\u0000[\"public\",\"otp_purpose\"]",
+      "set": {
+        "values": [
+          "register",
+          "reset_password"
+        ]
+      }
+    }
+  ]
+}

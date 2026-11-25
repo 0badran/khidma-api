@@ -42,7 +42,16 @@ Response 200: `{ "token", "user": { "id", "role", "name" }, "message"? }`. `mess
 Errors: 401 wrong credentials, 503 maintenance (non-admin).
 
 ### `GET /api/auth/me` (any signed-in user)
-Response: `{ "user": { "id", "role", "name", "phone", "email", "birthDate" } }`.
+Response: `{ "user": { "id", "role", "name", "phone", "email", "birthDate" }, "provider"?: {...} }`. `provider` is only there for providers: `{ "categoryId", "categoryNameAr", "categoryNameEn", "cityId", "cityNameAr", "cityNameEn", "governorateId", "governorateNameAr", "governorateNameEn", "photoUrl" (stored value, can be null), "yearsOfExperience", "bio", "isActive" }`.
+
+### `POST /api/auth/forgot-password/request-otp`
+Body: `{ "email": string }`. If the email has an account, sends a 6-digit reset code (valid 10 minutes). Always answers 200 `{ "message" }` the same way, so it does not reveal which emails are registered. Asking again within 60 seconds sends nothing new.
+
+### `POST /api/auth/forgot-password/reset`
+Body: `{ "email", "otp" (6 digits), "newPassword" (8 to 128 characters) }`. Codes work once, 5 wrong attempts allowed. Response 200: `{ "message" }`. Errors: 400 wrong or expired code, 429 too many wrong codes. It does not sign the user in: call login afterwards. Existing tokens stay valid until they expire (30 days).
+
+## CORS
+Browsers may call the API directly. Set `CORS_ORIGINS` (comma-separated, for example `https://khidma.example`) to allow only those origins. Unset, any origin is allowed. Auth is the `Authorization: Bearer` header, so cookies are not sent cross-origin (no credentials).
 
 ### `DELETE /api/auth/me` (customer or provider)
 Hides the account. It is deleted after 30 days without sign-in, and signing in again restores it. Response: `{ "message": string }`. Admin gets 403.

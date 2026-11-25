@@ -1,0 +1,1 @@
+ALTER TYPE "otp_purpose" ADD VALUE 'reset_password';

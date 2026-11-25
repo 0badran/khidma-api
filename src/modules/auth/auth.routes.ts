@@ -2,7 +2,7 @@ import { Router } from "express";
 import { and, desc, eq, gt, isNull, or } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/client.js";
-import { categories, cities, otpCodes, providers, users } from "../../db/schema.js";
+import { categories, cities, governorates, otpCodes, providers, users } from "../../db/schema.js";
 import { HttpError, badRequest, conflict, unauthorized } from "../../lib/errors.js";
 import { sendOtpEmail } from "../../lib/mailer.js";
 import { createToken, generateOtp, hashOtp, hashPassword, verifyPassword } from "../../lib/security.js";
@@ -27,7 +27,7 @@ authRouter.post("/register/request-otp", async (req, res) => {
   const [last] = await db
     .select({ createdAt: otpCodes.createdAt })
     .from(otpCodes)
-    .where(eq(otpCodes.email, email))
+    .where(and(eq(otpCodes.email, email), eq(otpCodes.purpose, "register")))
     .orderBy(desc(otpCodes.createdAt))
     .limit(1);
   if (last && Date.now() - last.createdAt.getTime() < OTP_RESEND_MS) {
@@ -80,6 +80,7 @@ authRouter.post("/register", async (req, res) => {
     .where(
       and(
         eq(otpCodes.email, body.email),
+        eq(otpCodes.purpose, "register"),
         isNull(otpCodes.consumedAt),
         gt(otpCodes.expiresAt, new Date()),
       ),
@@ -169,6 +170,76 @@ authRouter.post("/login", async (req, res) => {
   });
 });
 
+// Forgot password. The request answers the same way whether or not the email has an account.
+authRouter.post("/forgot-password/request-otp", async (req, res) => {
+  const { email } = parse(z.object({ email: emailSchema }), req.body);
+  const reply = { message: req.t("messages.resetOtpSent") };
+
+  const [user] = await db.select({ id: users.id }).from(users).where(eq(users.email, email));
+  if (!user) {
+    res.json(reply);
+    return;
+  }
+  const [last] = await db
+    .select({ createdAt: otpCodes.createdAt })
+    .from(otpCodes)
+    .where(and(eq(otpCodes.email, email), eq(otpCodes.purpose, "reset_password")))
+    .orderBy(desc(otpCodes.createdAt))
+    .limit(1);
+  if (last && Date.now() - last.createdAt.getTime() < OTP_RESEND_MS) {
+    res.json(reply);
+    return;
+  }
+
+  const code = generateOtp();
+  await db.insert(otpCodes).values({
+    email,
+    purpose: "reset_password",
+    codeHash: hashOtp(email, code),
+    expiresAt: new Date(Date.now() + OTP_TTL_MS),
+  });
+  await sendOtpEmail(email, code, "reset_password");
+  res.json(reply);
+});
+
+const resetSchema = z.object({
+  email: emailSchema,
+  otp: z.string().regex(/^\d{6}$/),
+  newPassword: z.string().min(8).max(128),
+});
+
+authRouter.post("/forgot-password/reset", async (req, res) => {
+  const body = parse(resetSchema, req.body);
+  const [otp] = await db
+    .select()
+    .from(otpCodes)
+    .where(
+      and(
+        eq(otpCodes.email, body.email),
+        eq(otpCodes.purpose, "reset_password"),
+        isNull(otpCodes.consumedAt),
+        gt(otpCodes.expiresAt, new Date()),
+      ),
+    )
+    .orderBy(desc(otpCodes.createdAt))
+    .limit(1);
+  if (!otp) throw badRequest("errors.otpInvalid");
+  if (otp.attempts >= OTP_MAX_ATTEMPTS) throw new HttpError(429, "errors.otpTooManyAttempts");
+  if (otp.codeHash !== hashOtp(body.email, body.otp)) {
+    await db.update(otpCodes).set({ attempts: otp.attempts + 1 }).where(eq(otpCodes.id, otp.id));
+    throw badRequest("errors.otpInvalid");
+  }
+
+  const [user] = await db.select({ id: users.id }).from(users).where(eq(users.email, body.email));
+  if (!user) throw badRequest("errors.otpInvalid");
+  const passwordHash = await hashPassword(body.newPassword);
+  await db.transaction(async (tx) => {
+    await tx.update(otpCodes).set({ consumedAt: new Date() }).where(eq(otpCodes.id, otp.id));
+    await tx.update(users).set({ passwordHash }).where(eq(users.id, user.id));
+  });
+  res.json({ message: req.t("messages.passwordReset") });
+});
+
 authRouter.get("/me", requireAuth, async (req, res) => {
   const [user] = await db
     .select({
@@ -181,7 +252,33 @@ authRouter.get("/me", requireAuth, async (req, res) => {
     })
     .from(users)
     .where(eq(users.id, req.auth!.id));
-  res.json({ user });
+
+  // Providers also get their own profile, so the edit page needs no second request.
+  let provider = null;
+  if (user?.role === "provider") {
+    [provider = null] = await db
+      .select({
+        categoryId: providers.categoryId,
+        categoryNameAr: categories.nameAr,
+        categoryNameEn: categories.nameEn,
+        cityId: providers.cityId,
+        cityNameAr: cities.nameAr,
+        cityNameEn: cities.nameEn,
+        governorateId: cities.governorateId,
+        governorateNameAr: governorates.nameAr,
+        governorateNameEn: governorates.nameEn,
+        photoUrl: providers.photoUrl,
+        yearsOfExperience: providers.yearsOfExperience,
+        bio: providers.bio,
+        isActive: providers.isActive,
+      })
+      .from(providers)
+      .innerJoin(categories, eq(categories.id, providers.categoryId))
+      .leftJoin(cities, eq(cities.id, providers.cityId))
+      .leftJoin(governorates, eq(governorates.id, cities.governorateId))
+      .where(eq(providers.userId, user.id));
+  }
+  res.json({ user, ...(provider ? { provider } : {}) });
 });
 
 // Deleting an account hides it. It is purged after 30 days without sign-in.
