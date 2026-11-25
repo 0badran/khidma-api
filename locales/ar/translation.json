@@ -16,6 +16,7 @@
     "emailNotVerified": "فعّل الإيميل أولًا.",
     "alreadyRated": "لقد قيّمت هذا الفني بهذا الرقم من قبل.",
     "categoryNotFound": "القسم غير موجود.",
+    "cityNotFound": "المدينة غير موجودة.",
     "providerNotFound": "الفني غير موجود.",
     "uploadsUnavailable": "رفع الصور غير مفعّل حاليًا."
   },

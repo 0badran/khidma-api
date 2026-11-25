@@ -31,10 +31,10 @@ Errors: 409 email already registered, 429 asked again within 60 seconds. The mai
 ### `POST /api/auth/register`
 Checks the code and creates the account. Codes work once, with 5 wrong attempts allowed.
 Customer body: `{ "role": "customer", "name", "phone", "email", "password", "birthDate", "otp" }`.
-Provider body: same plus `"categoryId": number`, `"city": string`, optional `"photoUrl": url`, optional `"yearsOfExperience": whole number 0 to 60`, optional `"bio": text up to 1000 characters`.
+Provider body: same plus `"categoryId": number`, `"cityId": number` (from `GET /api/cities`), optional `"photoUrl": url`, optional `"yearsOfExperience": whole number 0 to 60`, optional `"bio": text up to 1000 characters`.
 Limits: name 2 to 100 characters, password 8 to 128 characters, otp is exactly 6 digits.
 Response 201: `{ "token": string, "user": { "id", "role" } }`.
-Errors: 400 wrong or expired code or unknown category, 409 phone or email taken, 429 too many wrong codes.
+Errors: 400 wrong or expired code or unknown category or city, 409 phone or email taken, 429 too many wrong codes.
 
 ### `POST /api/auth/login`
 Body: `{ "identifier": string, "password": string }`. `identifier` is the email or the phone.
@@ -60,20 +60,20 @@ Response: `{ "governorate": { "id", "nameAr", "nameEn" }, "cities": [{ "id", "go
 ### `GET /api/cities`
 Optional query `governorateId`. Response: `{ "cities": [City] }`.
 
-Providers still store `city` as free text. It is not linked to these tables yet.
+Each provider has a `cityId`. The city gives the governorate.
 
 ## Providers
 
 ### `GET /api/providers`
-Public list, best rated first. Query: `categoryId`, `city` (case-insensitive exact), `q` (name contains), `page` (default 1), `limit` (default 20, max 50).
+Public list, best rated first. Query: `categoryId`, `cityId`, `governorateId`, `q` (name contains), `page` (default 1), `limit` (default 20, max 50).
 Response: `{ "providers": [Provider], "page", "limit" }`.
-Provider item: `{ "id", "name", "age", "city", "photoUrl", "yearsOfExperience", "categoryId", "categoryNameAr", "categoryNameEn", "avgRating", "ratingsCount" }`. `avgRating` is null with no ratings. `photoUrl` is never null on public routes: a provider with no photo returns a default placeholder image URL (admin routes show the stored value, which can be null).
+Provider item: `{ "id", "name", "age", "cityId", "cityNameAr", "cityNameEn", "governorateId", "governorateNameAr", "governorateNameEn", "photoUrl", "yearsOfExperience", "categoryId", "categoryNameAr", "categoryNameEn", "avgRating", "ratingsCount" }`. `avgRating` is null with no ratings. `photoUrl` is never null on public routes: a provider with no photo returns a default placeholder image URL (admin routes show the stored value, which can be null).
 
 ### `GET /api/providers/:id`
 Same fields plus `"bio"`, `"phone"`, `"callUrl"` (`tel:...`) and `"whatsappUrl"` (`https://wa.me/...`), inside `{ "provider": {...} }`. 404 if hidden or deactivated.
 
 ### `PATCH /api/providers/me` (provider)
-Any of `name`, `birthDate`, `city`, `categoryId`, `photoUrl` (url or null), `yearsOfExperience` (0 to 60 or null), `bio` (up to 1000 characters or null). At least one field. Response: `{ "ok": true }`.
+Any of `name`, `birthDate`, `cityId`, `categoryId`, `photoUrl` (url or null), `yearsOfExperience` (0 to 60 or null), `bio` (up to 1000 characters or null). At least one field. Response: `{ "ok": true }`.
 
 ### `PATCH /api/customers/me` (customer)
 Any of `name`, `birthDate`. At least one field. Response: `{ "ok": true }`.
@@ -110,7 +110,7 @@ Admin signs in with the normal login route.
 | `POST /api/admin/categories` | `{ nameAr, nameEn, imageUrl?, sortOrder? }` | 201 `{ category }` |
 | `PATCH /api/admin/categories/:id` | any of the same fields | `{ category }` |
 | `DELETE /api/admin/categories/:id` | none | `{ ok }`. 409 if providers use it |
-| `GET /api/admin/providers` | `page`, `limit` (max 100) | `{ providers: [{ id, name, phone, email, age, city, categoryId, photoUrl, yearsOfExperience, bio, isActive, hiddenAt }], page, limit }` |
+| `GET /api/admin/providers` | `page`, `limit` (max 100) | `{ providers: [{ id, name, phone, email, age, cityId, cityNameAr, cityNameEn, governorateId, categoryId, photoUrl, yearsOfExperience, bio, isActive, hiddenAt }], page, limit }` |
 | `PATCH /api/admin/providers/:id/active` | `{ isActive: boolean }` | `{ ok }` |
 | `GET /api/admin/customers` | `page`, `limit` | `{ customers: [{ id, name, phone, email, age, hiddenAt, createdAt }], page, limit }` |
 | `GET /api/admin/settings` | none | same as public settings |

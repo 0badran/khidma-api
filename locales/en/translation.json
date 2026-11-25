@@ -16,6 +16,7 @@
     "emailNotVerified": "Verify your email first.",
     "alreadyRated": "You already rated this provider with this phone number.",
     "categoryNotFound": "Category not found.",
+    "cityNotFound": "City not found.",
     "providerNotFound": "Provider not found.",
     "uploadsUnavailable": "Image upload is not set up yet."
   },

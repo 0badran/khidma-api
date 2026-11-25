@@ -2,7 +2,7 @@ import { Router } from "express";
 import { and, desc, eq, gt, isNull, or } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/client.js";
-import { categories, otpCodes, providers, users } from "../../db/schema.js";
+import { categories, cities, otpCodes, providers, users } from "../../db/schema.js";
 import { HttpError, badRequest, conflict, unauthorized } from "../../lib/errors.js";
 import { sendOtpEmail } from "../../lib/mailer.js";
 import { createToken, generateOtp, hashOtp, hashPassword, verifyPassword } from "../../lib/security.js";
@@ -64,7 +64,7 @@ const registerSchema = z.discriminatedUnion("role", [
     birthDate: z.iso.date(),
     otp: z.string().regex(/^\d{6}$/),
     categoryId: z.number().int().positive(),
-    city: z.string().trim().min(2).max(100),
+    cityId: z.number().int().positive(),
     photoUrl: z.url().optional(),
     yearsOfExperience: z.number().int().min(0).max(60).optional(),
     bio: z.string().trim().max(1000).optional(),
@@ -104,6 +104,8 @@ authRouter.post("/register", async (req, res) => {
       .from(categories)
       .where(eq(categories.id, body.categoryId));
     if (!category) throw badRequest("errors.categoryNotFound");
+    const [city] = await db.select({ id: cities.id }).from(cities).where(eq(cities.id, body.cityId));
+    if (!city) throw badRequest("errors.cityNotFound");
   }
 
   const passwordHash = await hashPassword(body.password);
@@ -127,7 +129,7 @@ authRouter.post("/register", async (req, res) => {
       await tx.insert(providers).values({
         userId: created.id,
         categoryId: body.categoryId,
-        city: body.city,
+        cityId: body.cityId,
         photoUrl: body.photoUrl,
         yearsOfExperience: body.yearsOfExperience,
         bio: body.bio,

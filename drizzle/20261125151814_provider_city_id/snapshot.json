@@ -1,0 +1,155 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "8a462f37-618a-44d0-ba1a-c7fa07b35187",
+  "prevIds": [
+    "f369e21f-66ff-47f6-bb8c-92ba84a2a976"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "providers",
+        "city_id"
+      ],
+      "writes": [
+        "s|col|public.providers.city_id",
+        "n|col|public.providers.city_id",
+        "e|col|public.providers.city_id"
+      ],
+      "reads": [
+        "n|tbl|public.providers",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "providers",
+        "city"
+      ],
+      "writes": [
+        "s|col|public.providers.city",
+        "n|col|public.providers.city",
+        "e|col|public.providers.city"
+      ],
+      "reads": [
+        "n|tbl|public.providers",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "providers",
+        "providers_category_city_idx"
+      ],
+      "writes": [
+        "s|idx|public.providers_category_city_idx",
+        "n|idx|public.providers_category_city_idx",
+        "e|idx|public.providers_category_city_idx",
+        "n|rel|public.providers_category_city_idx"
+      ],
+      "reads": [
+        "n|tbl|public.providers",
+        "n|sch|public",
+        "n|col|public.providers.category_id",
+        "n|col|public.providers.city_id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "providers"
+      ],
+      "writes": [
+        "s|fk|public.providers.providers_city_id_cities_id_fkey",
+        "n|fk|public.providers.providers_city_id_cities_id_fkey",
+        "e|fk|public.providers.providers_city_id_cities_id_fkey",
+        "n|con|public.providers.providers_city_id_cities_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.providers",
+        "n|sch|public",
+        "n|tbl|public.cities",
+        "n|sch|public",
+        "n|col|public.providers.city_id",
+        "n|col|public.cities.id",
+        "e|uniqueness|public.cities.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "providers",
+        "name": "city_id",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "providers",
+        "name": "providers_city_id_cities_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "city_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "cities",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "NO ACTION",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"providers\",\"city\"]"
+    },
+    {
+      "op": "alter",
+      "key": "indexes\u0000[\"public\",\"providers_category_city_idx\"]",
+      "set": {
+        "columns": [
+          {
+            "value": "category_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "city_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ]
+      }
+    }
+  ]
+}

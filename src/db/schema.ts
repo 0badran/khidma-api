@@ -71,14 +71,15 @@ export const providers = pgTable(
     categoryId: integer("category_id")
       .notNull()
       .references(() => categories.id),
-    city: text("city").notNull(),
+    // Null only for providers created before cities existed and not matched to one.
+    cityId: integer("city_id").references(() => cities.id),
     photoUrl: text("photo_url"),
     yearsOfExperience: integer("years_of_experience"),
     bio: text("bio"),
     // Admin switch: inactive providers are hidden from browsing.
     isActive: boolean("is_active").notNull().default(true),
   },
-  (t) => [index("providers_category_city_idx").on(t.categoryId, t.city)],
+  (t) => [index("providers_category_city_idx").on(t.categoryId, t.cityId)],
 );
 
 export const ratings = pgTable(

@@ -3,7 +3,7 @@ import { and, asc, desc, eq, ilike, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/client.js";
 import { AVATAR_PLACEHOLDER_URL } from "../../config/placeholders.js";
-import { categories, providers, ratings, users } from "../../db/schema.js";
+import { categories, cities, governorates, providers, ratings, users } from "../../db/schema.js";
 import { ageExpr } from "../../lib/age.js";
 import { badRequest, notFound } from "../../lib/errors.js";
 import { parse } from "../../lib/validate.js";
@@ -23,7 +23,8 @@ const stats = db
 
 const listQuery = z.object({
   categoryId: z.coerce.number().int().positive().optional(),
-  city: z.string().trim().min(1).optional(),
+  cityId: z.coerce.number().int().positive().optional(),
+  governorateId: z.coerce.number().int().positive().optional(),
   q: z.string().trim().min(1).optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(50).default(20),
@@ -33,7 +34,12 @@ const providerColumns = {
   id: providers.userId,
   name: users.name,
   age: ageExpr,
-  city: providers.city,
+  cityId: providers.cityId,
+  cityNameAr: cities.nameAr,
+  cityNameEn: cities.nameEn,
+  governorateId: cities.governorateId,
+  governorateNameAr: governorates.nameAr,
+  governorateNameEn: governorates.nameEn,
   photoUrl: sql<string>`coalesce(${providers.photoUrl}, ${AVATAR_PLACEHOLDER_URL}::text)`,
   yearsOfExperience: providers.yearsOfExperience,
   categoryId: providers.categoryId,
@@ -51,7 +57,8 @@ providersRouter.get("/", async (req, res) => {
   const where = and(
     visible,
     query.categoryId ? eq(providers.categoryId, query.categoryId) : undefined,
-    query.city ? ilike(providers.city, query.city) : undefined,
+    query.cityId ? eq(providers.cityId, query.cityId) : undefined,
+    query.governorateId ? eq(cities.governorateId, query.governorateId) : undefined,
     query.q ? ilike(users.name, `%${query.q}%`) : undefined,
   );
   const rows = await db
@@ -59,6 +66,8 @@ providersRouter.get("/", async (req, res) => {
     .from(providers)
     .innerJoin(users, eq(users.id, providers.userId))
     .innerJoin(categories, eq(categories.id, providers.categoryId))
+    .leftJoin(cities, eq(cities.id, providers.cityId))
+    .leftJoin(governorates, eq(governorates.id, cities.governorateId))
     .leftJoin(stats, eq(stats.providerId, providers.userId))
     .where(where)
     .orderBy(sql`${stats.avg} desc nulls last`, desc(sql`coalesce(${stats.count}, 0)`), asc(providers.userId))
@@ -71,7 +80,7 @@ const updateSchema = z
   .object({
     name: z.string().trim().min(2).max(100),
     birthDate: z.iso.date(),
-    city: z.string().trim().min(2).max(100),
+    cityId: z.number().int().positive(),
     categoryId: z.number().int().positive(),
     photoUrl: z.url().nullable(),
     yearsOfExperience: z.number().int().min(0).max(60).nullable(),
@@ -90,6 +99,10 @@ providersRouter.patch("/me", requireAuth, requireRole("provider"), async (req, r
       .where(eq(categories.id, body.categoryId));
     if (!category) throw badRequest("errors.categoryNotFound");
   }
+  if (body.cityId) {
+    const [city] = await db.select({ id: cities.id }).from(cities).where(eq(cities.id, body.cityId));
+    if (!city) throw badRequest("errors.cityNotFound");
+  }
   await db.transaction(async (tx) => {
     if (body.name !== undefined || body.birthDate !== undefined) {
       await tx
@@ -98,7 +111,7 @@ providersRouter.patch("/me", requireAuth, requireRole("provider"), async (req, r
         .where(eq(users.id, id));
     }
     const profile = {
-      city: body.city,
+      cityId: body.cityId,
       categoryId: body.categoryId,
       photoUrl: body.photoUrl,
       yearsOfExperience: body.yearsOfExperience,
@@ -118,6 +131,8 @@ providersRouter.get("/:id", async (req, res) => {
     .from(providers)
     .innerJoin(users, eq(users.id, providers.userId))
     .innerJoin(categories, eq(categories.id, providers.categoryId))
+    .leftJoin(cities, eq(cities.id, providers.cityId))
+    .leftJoin(governorates, eq(governorates.id, cities.governorateId))
     .leftJoin(stats, eq(stats.providerId, providers.userId))
     .where(and(visible, eq(providers.userId, id)));
   if (!row) throw notFound("errors.providerNotFound");

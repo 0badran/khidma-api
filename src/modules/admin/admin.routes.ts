@@ -2,7 +2,7 @@ import { Router } from "express";
 import { count, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/client.js";
-import { categories, providers, users } from "../../db/schema.js";
+import { categories, cities, providers, users } from "../../db/schema.js";
 import { ageExpr } from "../../lib/age.js";
 import { conflict, notFound } from "../../lib/errors.js";
 import { parse } from "../../lib/validate.js";
@@ -57,7 +57,10 @@ adminRouter.get("/providers", async (req, res) => {
       phone: users.phone,
       email: users.email,
       age: ageExpr,
-      city: providers.city,
+      cityId: providers.cityId,
+      cityNameAr: cities.nameAr,
+      cityNameEn: cities.nameEn,
+      governorateId: cities.governorateId,
       categoryId: providers.categoryId,
       photoUrl: providers.photoUrl,
       yearsOfExperience: providers.yearsOfExperience,
@@ -67,6 +70,7 @@ adminRouter.get("/providers", async (req, res) => {
     })
     .from(providers)
     .innerJoin(users, eq(users.id, providers.userId))
+    .leftJoin(cities, eq(cities.id, providers.cityId))
     .orderBy(desc(users.createdAt))
     .limit(limit)
     .offset((page - 1) * limit);

@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { eq, like } from "drizzle-orm";
 import { db, pool } from "../src/db/client.js";
-import { categories, providers, users } from "../src/db/schema.js";
+import { categories, cities, providers, users } from "../src/db/schema.js";
 import { hashPassword } from "../src/lib/security.js";
 
 const DEMO_EMAIL_DOMAIN = "@demo.khidma.test";
@@ -31,7 +31,7 @@ const bios = [
   "تنظيف المنازل والخزانات والسجاد والستائر بمعدات حديثة.",
   "نقل وفك وتركيب الأثاث بحرص وفريق مدرب.",
 ];
-const cities = ["المنصورة", "القاهرة", "الإسكندرية", "طنطا", "دمياط"];
+const cityNames = ["المنصورة", "مدينة نصر", "المحلة الكبرى", "طنطا", "دمياط"];
 
 if (process.argv.includes("--remove")) {
   const removed = await db.delete(users).where(like(users.email, `%${DEMO_EMAIL_DOMAIN}`)).returning({ id: users.id });
@@ -39,6 +39,13 @@ if (process.argv.includes("--remove")) {
   await pool.end();
   process.exit(0);
 }
+
+const cityRows = await db.select({ id: cities.id, nameAr: cities.nameAr }).from(cities);
+const cityIds = cityNames.map((n) => {
+  const row = cityRows.find((c) => c.nameAr === n);
+  if (!row) throw new Error(`city not found: ${n}. Run npm run seed first.`);
+  return row.id;
+});
 
 const cats = await db.select().from(categories).orderBy(categories.sortOrder);
 
@@ -49,7 +56,11 @@ for (const [i, cat] of cats.entries()) {
   if (exists) {
     await db
       .update(providers)
-      .set({ yearsOfExperience: years[i % years.length], bio: bios[i % bios.length] })
+      .set({
+        yearsOfExperience: years[i % years.length],
+        bio: bios[i % bios.length],
+        cityId: cityIds[i % cityIds.length],
+      })
       .where(eq(providers.userId, exists.id));
     continue;
   }
@@ -70,7 +81,7 @@ for (const [i, cat] of cats.entries()) {
   await db.insert(providers).values({
     userId: user.id,
     categoryId: cat.id,
-    city: cities[i % cities.length],
+    cityId: cityIds[i % cityIds.length],
   });
   created++;
 }
