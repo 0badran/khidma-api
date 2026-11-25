@@ -1,14 +1,9 @@
 import { randomBytes } from "node:crypto";
-import { eq, isNull, like } from "drizzle-orm";
+import { eq, like } from "drizzle-orm";
 import { db, pool } from "../src/db/client.js";
 import { categories, providers, users } from "../src/db/schema.js";
 import { hashPassword } from "../src/lib/security.js";
 
-// Default placeholders: one for services (categories), one for provider profile photos.
-const SERVICE_PLACEHOLDER_URL =
-  "https://res.cloudinary.com/dswszy2zi/image/upload/v1795613707/khidma/category/otnkon5eezgjmktylgfc.png";
-const AVATAR_PLACEHOLDER_URL =
-  "https://res.cloudinary.com/dswszy2zi/image/upload/v1795613729/khidma/category/uih0ekl5z9kxc7ilkczo.png";
 const DEMO_EMAIL_DOMAIN = "@demo.khidma.test";
 
 const names = [
@@ -33,7 +28,6 @@ if (process.argv.includes("--remove")) {
 }
 
 const cats = await db.select().from(categories).orderBy(categories.sortOrder);
-await db.update(categories).set({ imageUrl: SERVICE_PLACEHOLDER_URL }).where(isNull(categories.imageUrl));
 
 let created = 0;
 for (const [i, cat] of cats.entries()) {
@@ -58,7 +52,6 @@ for (const [i, cat] of cats.entries()) {
     userId: user.id,
     categoryId: cat.id,
     city: cities[i % cities.length],
-    photoUrl: AVATAR_PLACEHOLDER_URL,
   });
   created++;
 }

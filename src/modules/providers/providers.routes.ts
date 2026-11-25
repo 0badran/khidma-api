@@ -2,6 +2,7 @@ import { Router } from "express";
 import { and, asc, desc, eq, ilike, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/client.js";
+import { AVATAR_PLACEHOLDER_URL } from "../../config/placeholders.js";
 import { categories, providers, ratings, users } from "../../db/schema.js";
 import { ageExpr } from "../../lib/age.js";
 import { badRequest, notFound } from "../../lib/errors.js";
@@ -33,7 +34,7 @@ const providerColumns = {
   name: users.name,
   age: ageExpr,
   city: providers.city,
-  photoUrl: providers.photoUrl,
+  photoUrl: sql<string>`coalesce(${providers.photoUrl}, ${AVATAR_PLACEHOLDER_URL}::text)`,
   categoryId: providers.categoryId,
   categoryNameAr: categories.nameAr,
   categoryNameEn: categories.nameEn,

@@ -20,7 +20,7 @@ The free Render service sleeps after 15 minutes. The first request after a pause
 | --- | --- | --- |
 | `GET /health` | none | `{ "ok": true }` |
 | `GET /api/settings/public` | none | `{ "appName": string, "logoUrl": string or null, "maintenanceMode": boolean }` |
-| `GET /api/categories` | none | `{ "categories": [{ "id", "nameAr", "nameEn", "imageUrl", "sortOrder" }] }` |
+| `GET /api/categories` | none | `{ "categories": [{ "id", "nameAr", "nameEn", "imageUrl", "sortOrder" }] }`. `imageUrl` is never null: a category with no image returns a default placeholder image URL. |
 
 ## Sign up and sign in
 
@@ -52,7 +52,7 @@ Hides the account. It is deleted after 30 days without sign-in, and signing in a
 ### `GET /api/providers`
 Public list, best rated first. Query: `categoryId`, `city` (case-insensitive exact), `q` (name contains), `page` (default 1), `limit` (default 20, max 50).
 Response: `{ "providers": [Provider], "page", "limit" }`.
-Provider item: `{ "id", "name", "age", "city", "photoUrl", "categoryId", "categoryNameAr", "categoryNameEn", "avgRating", "ratingsCount" }`. `avgRating` is null with no ratings.
+Provider item: `{ "id", "name", "age", "city", "photoUrl", "categoryId", "categoryNameAr", "categoryNameEn", "avgRating", "ratingsCount" }`. `avgRating` is null with no ratings. `photoUrl` is never null on public routes: a provider with no photo returns a default placeholder image URL (admin routes show the stored value, which can be null).
 
 ### `GET /api/providers/:id`
 Same fields plus `"phone"`, `"callUrl"` (`tel:...`) and `"whatsappUrl"` (`https://wa.me/...`), inside `{ "provider": {...} }`. 404 if hidden or deactivated.
