@@ -11,7 +11,7 @@ export const customersRouter = Router();
 const updateSchema = z
   .object({
     name: z.string().trim().min(2).max(100),
-    birthDate: z.iso.date(),
+    birthDate: z.iso.date().nullable(),
   })
   .partial()
   .refine((v) => Object.keys(v).length > 0);

@@ -80,7 +80,7 @@ const registerSchema = z.discriminatedUnion("role", [
     phone: phoneSchema,
     email: emailSchema,
     password: z.string().min(8).max(128),
-    birthDate: z.iso.date(),
+    birthDate: z.iso.date().optional(),
     otp: z.string().regex(/^\d{6}$/),
   }),
   z.object({

@@ -36,8 +36,8 @@ Body: `{ "email": string, "otp": string }` (6 digits). Checks the sign-up code w
 
 ### `POST /api/auth/register`
 Checks the code and creates the account. Codes work once, with 5 wrong attempts allowed.
-Customer body: `{ "role": "customer", "name", "phone", "email", "password", "birthDate", "otp" }`.
-Provider body: same plus `"categoryId": number`, `"cityId": number` (from `GET /api/governorates/:id/cities`), optional `"photoUrl": url`, optional `"yearsOfExperience": whole number 0 to 60`, optional `"bio": text up to 1000 characters`.
+Customer body: `{ "role": "customer", "name", "phone", "email", "password", "otp" }`, with an optional `"birthDate"`.
+Provider body: same, with `"birthDate"` required, plus `"categoryId": number`, `"cityId": number` (from `GET /api/governorates/:id/cities`), optional `"photoUrl": url`, optional `"yearsOfExperience": whole number 0 to 60`, optional `"bio": text up to 1000 characters`.
 Limits: name 2 to 100 characters, password 8 to 128 characters, otp is exactly 6 digits.
 Response 201: `{ "token", "refreshToken", "expiresIn": 900, "user": { "id", "role" } }`. `token` is the access token (15 minutes). Send it as `Authorization: Bearer`. See "Sessions" below.
 Errors: 400 wrong or expired code or unknown category or city, 409 phone or email taken, 429 too many wrong codes.
@@ -112,7 +112,7 @@ Same fields plus `"bio"`, `"phone"`, `"callUrl"` (`tel:...`) and `"whatsappUrl"`
 Any of `name`, `birthDate`, `cityId`, `categoryId`, `photoUrl` (url or null), `yearsOfExperience` (0 to 60 or null), `bio` (up to 1000 characters or null). At least one field. Response: `{ "ok": true }`.
 
 ### `PATCH /api/customers/me` (customer)
-Any of `name`, `birthDate`. At least one field. Response: `{ "ok": true }`.
+Any of `name`, `birthDate` (date or null to clear it). At least one field. Response: `{ "ok": true }`.
 
 ## Ratings
 
