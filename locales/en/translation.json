@@ -12,6 +12,7 @@
     "phoneTaken": "This phone number is already registered.",
     "emailTaken": "This email is already registered.",
     "otpInvalid": "The code is wrong or expired.",
+    "verificationInvalid": "The email verification expired. Verify your email again.",
     "otpTooManyAttempts": "Too many attempts. Request a new code.",
     "emailNotVerified": "Verify your email first.",
     "alreadyRated": "You already rated this provider with this phone number.",

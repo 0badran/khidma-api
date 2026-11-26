@@ -32,15 +32,15 @@ Body: `{ "email": string }`. Sends a 6-digit code by email (valid 10 minutes). R
 Errors: 409 email already registered, 429 asked again within 60 seconds. The mail can land in spam, and the message text tells the user to check there.
 
 ### `POST /api/auth/register/verify-otp`
-Body: `{ "email": string, "otp": string }` (6 digits). Checks the sign-up code without using it up, so the form can move on to the next step only when the code is right. Response 200: `{ "message" }`. Errors: 400 wrong or expired code, 429 too many wrong codes (the same 5 attempts as register, shared). Register still checks the code again, so this call is a convenience and not a pass.
+Body: `{ "email": string, "otp": string }` (6 digits). Checks the sign-up code and uses it up. Response 200: `{ "message", "verificationToken" }`. The token proves this email passed the check. It is bound to the email and valid for 30 minutes. Send it to register. Errors: 400 wrong or expired code, 429 too many wrong codes (5 attempts, shared with register).
 
 ### `POST /api/auth/register`
-Checks the code and creates the account. Codes work once, with 5 wrong attempts allowed.
-Customer body: `{ "role": "customer", "name", "phone", "email", "password", "otp" }`, with an optional `"birthDate"`.
+Creates the account. Send `"verificationToken"` from `register/verify-otp` (valid 30 minutes). Older clients can still send the raw `"otp"` instead (checked here, works once, 5 wrong attempts allowed); `otp` will be removed later.
+Customer body: `{ "role": "customer", "name", "phone", "email", "password", "verificationToken" }`, with an optional `"birthDate"`.
 Provider body: same, with `"birthDate"` required, plus `"categoryId": number`, `"cityId": number` (from `GET /api/governorates/:id/cities`), optional `"photoUrl": url`, optional `"yearsOfExperience": whole number 0 to 60`, optional `"bio": text up to 1000 characters`.
 Limits: name 2 to 100 characters, password 8 to 128 characters, otp is exactly 6 digits.
 Response 201: `{ "token", "refreshToken", "expiresIn": 900, "user": { "id", "role" } }`. `token` is the access token (15 minutes). Send it as `Authorization: Bearer`. See "Sessions" below.
-Errors: 400 wrong or expired code or unknown category or city, 409 phone or email taken, 429 too many wrong codes.
+Errors: 400 invalid or expired `verificationToken` (as a field error), wrong or expired `otp`, or unknown category or city, 409 phone or email taken, 429 too many wrong codes.
 
 ### `POST /api/auth/login`
 Body: `{ "identifier": string, "password": string }`. `identifier` is the email or the phone.

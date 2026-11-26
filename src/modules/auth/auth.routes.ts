@@ -5,9 +5,16 @@ import { db } from "../../db/client.js";
 import { categories, cities, governorates, otpCodes, providers, users } from "../../db/schema.js";
 import { HttpError, badRequest, conflict, unauthorized } from "../../lib/errors.js";
 import { sendOtpEmail } from "../../lib/mailer.js";
-import { generateOtp, hashOtp, hashPassword, verifyPassword } from "../../lib/security.js";
+import {
+  createEmailProof,
+  generateOtp,
+  hashOtp,
+  hashPassword,
+  verifyEmailProof,
+  verifyPassword,
+} from "../../lib/security.js";
 import { createSession, revokeByRefreshToken, revokeSession, revokeUserSessions, rotateSession } from "../../lib/sessions.js";
-import { parse, phoneRegex } from "../../lib/validate.js";
+import { ValidationError, parse, phoneRegex } from "../../lib/validate.js";
 import { loadAuth, requireAuth } from "../../middleware/auth.js";
 import { isMaintenanceOn } from "../../middleware/maintenance.js";
 
@@ -70,7 +77,8 @@ authRouter.post("/register/verify-otp", async (req, res) => {
     await db.update(otpCodes).set({ attempts: otp.attempts + 1 }).where(eq(otpCodes.id, otp.id));
     throw badRequest("errors.otpInvalid");
   }
-  res.json({ message: req.t("messages.otpVerified") });
+  await db.update(otpCodes).set({ consumedAt: new Date() }).where(eq(otpCodes.id, otp.id));
+  res.json({ message: req.t("messages.otpVerified"), verificationToken: createEmailProof(email) });
 });
 
 const registerSchema = z.discriminatedUnion("role", [
@@ -81,7 +89,8 @@ const registerSchema = z.discriminatedUnion("role", [
     email: emailSchema,
     password: z.string().min(8).max(128),
     birthDate: z.iso.date().optional(),
-    otp: z.string().regex(/^\d{6}$/),
+    otp: z.string().regex(/^\d{6}$/).optional(),
+    verificationToken: z.string().max(500).optional(),
   }),
   z.object({
     role: z.literal("provider"),
@@ -90,7 +99,8 @@ const registerSchema = z.discriminatedUnion("role", [
     email: emailSchema,
     password: z.string().min(8).max(128),
     birthDate: z.iso.date(),
-    otp: z.string().regex(/^\d{6}$/),
+    otp: z.string().regex(/^\d{6}$/).optional(),
+    verificationToken: z.string().max(500).optional(),
     categoryId: z.number().int().positive(),
     cityId: z.number().int().positive(),
     photoUrl: z.url().optional(),
@@ -102,24 +112,35 @@ const registerSchema = z.discriminatedUnion("role", [
 authRouter.post("/register", async (req, res) => {
   const body = parse(registerSchema, req.body);
 
-  const [otp] = await db
-    .select()
-    .from(otpCodes)
-    .where(
-      and(
-        eq(otpCodes.email, body.email),
-        eq(otpCodes.purpose, "register"),
-        isNull(otpCodes.consumedAt),
-        gt(otpCodes.expiresAt, new Date()),
-      ),
-    )
-    .orderBy(desc(otpCodes.createdAt))
-    .limit(1);
-  if (!otp) throw badRequest("errors.otpInvalid");
-  if (otp.attempts >= OTP_MAX_ATTEMPTS) throw new HttpError(429, "errors.otpTooManyAttempts");
-  if (otp.codeHash !== hashOtp(body.email, body.otp)) {
-    await db.update(otpCodes).set({ attempts: otp.attempts + 1 }).where(eq(otpCodes.id, otp.id));
-    throw badRequest("errors.otpInvalid");
+  // The email proof from verify-otp is the normal path. The raw code is still
+  // accepted for older clients.
+  let codeRowId: number | null = null;
+  if (body.verificationToken) {
+    if (!verifyEmailProof(body.verificationToken, body.email)) {
+      throw new ValidationError({ verificationToken: [req.t("errors.verificationInvalid")] });
+    }
+  } else {
+    if (!body.otp) throw badRequest("errors.otpInvalid");
+    const [otp] = await db
+      .select()
+      .from(otpCodes)
+      .where(
+        and(
+          eq(otpCodes.email, body.email),
+          eq(otpCodes.purpose, "register"),
+          isNull(otpCodes.consumedAt),
+          gt(otpCodes.expiresAt, new Date()),
+        ),
+      )
+      .orderBy(desc(otpCodes.createdAt))
+      .limit(1);
+    if (!otp) throw badRequest("errors.otpInvalid");
+    if (otp.attempts >= OTP_MAX_ATTEMPTS) throw new HttpError(429, "errors.otpTooManyAttempts");
+    if (otp.codeHash !== hashOtp(body.email, body.otp)) {
+      await db.update(otpCodes).set({ attempts: otp.attempts + 1 }).where(eq(otpCodes.id, otp.id));
+      throw badRequest("errors.otpInvalid");
+    }
+    codeRowId = otp.id;
   }
 
   const [phoneUser] = await db.select({ id: users.id }).from(users).where(eq(users.phone, body.phone));
@@ -139,7 +160,9 @@ authRouter.post("/register", async (req, res) => {
 
   const passwordHash = await hashPassword(body.password);
   const user = await db.transaction(async (tx) => {
-    await tx.update(otpCodes).set({ consumedAt: new Date() }).where(eq(otpCodes.id, otp.id));
+    if (codeRowId !== null) {
+      await tx.update(otpCodes).set({ consumedAt: new Date() }).where(eq(otpCodes.id, codeRowId));
+    }
     const [created] = await tx
       .insert(users)
       .values({

@@ -70,3 +70,37 @@ export function verifyToken(token: string): TokenPayload | null {
     return null;
   }
 }
+
+const EMAIL_PROOF_TTL_SECONDS = 30 * 60;
+
+// Proof that an email passed the sign-up code check. Signed with the server
+// secret, bound to the email, short lived, and useless as an access token.
+export function createEmailProof(email: string): string {
+  const exp = Math.floor(Date.now() / 1000) + EMAIL_PROOF_TTL_SECONDS;
+  const body = Buffer.from(JSON.stringify({ email, purpose: "register", exp })).toString("base64url");
+  return `${body}.${sign(`email-proof.${body}`)}`;
+}
+
+export function verifyEmailProof(token: string, email: string): boolean {
+  const parts = token.split(".");
+  if (parts.length !== 2) return false;
+  const [body, signature] = parts as [string, string];
+  const expected = Buffer.from(sign(`email-proof.${body}`));
+  const actual = Buffer.from(signature);
+  if (expected.length !== actual.length || !timingSafeEqual(expected, actual)) return false;
+  try {
+    const data = JSON.parse(Buffer.from(body, "base64url").toString()) as {
+      email?: string;
+      purpose?: string;
+      exp?: number;
+    };
+    return (
+      data.purpose === "register" &&
+      data.email === email &&
+      typeof data.exp === "number" &&
+      data.exp >= Math.floor(Date.now() / 1000)
+    );
+  } catch {
+    return false;
+  }
+}
