@@ -35,12 +35,12 @@ Errors: 409 email already registered, 429 asked again within 60 seconds. The mai
 Body: `{ "email": string, "otp": string }` (6 digits). Checks the sign-up code and uses it up. Response 200: `{ "message", "verificationToken" }`. The token proves this email passed the check. It is bound to the email and valid for 30 minutes. Send it to register. Errors: 400 wrong or expired code, 429 too many wrong codes (5 attempts, shared with register).
 
 ### `POST /api/auth/register`
-Creates the account. Send `"verificationToken"` from `register/verify-otp` (valid 30 minutes). Older clients can still send the raw `"otp"` instead (checked here, works once, 5 wrong attempts allowed); `otp` will be removed later.
+Creates the account. Send `"verificationToken"` from `register/verify-otp` (valid 30 minutes). The raw `"otp"` is not accepted here.
 Customer body: `{ "role": "customer", "name", "phone", "email", "password", "verificationToken" }`, with an optional `"birthDate"`.
 Provider body: same, with `"birthDate"` required, plus `"categoryId": number`, `"cityId": number` (from `GET /api/governorates/:id/cities`), optional `"photoUrl": url`, optional `"yearsOfExperience": whole number 0 to 60`, optional `"bio": text up to 1000 characters`.
-Limits: name 2 to 100 characters, password 8 to 128 characters, otp is exactly 6 digits.
+Limits: name 2 to 100 characters, password 8 to 128 characters.
 Response 201: `{ "token", "refreshToken", "expiresIn": 900, "user": { "id", "role" } }`. `token` is the access token (15 minutes). Send it as `Authorization: Bearer`. See "Sessions" below.
-Errors: 400 invalid or expired `verificationToken` (as a field error), wrong or expired `otp`, or unknown category or city, 409 phone or email taken, 429 too many wrong codes.
+Errors: 400 missing, invalid or expired `verificationToken` (as a field error), or unknown category or city, 409 phone or email taken.
 
 ### `POST /api/auth/login`
 Body: `{ "identifier": string, "password": string }`. `identifier` is the email or the phone.
