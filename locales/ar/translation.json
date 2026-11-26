@@ -14,7 +14,6 @@
     "otpInvalid": "الكود غير صحيح أو منتهي.",
     "verificationInvalid": "تأكيد الإيميل انتهى. أكّد الإيميل من جديد.",
     "otpTooManyAttempts": "محاولات كثيرة. اطلب كودًا جديدًا.",
-    "emailNotVerified": "فعّل الإيميل أولًا.",
     "alreadyRated": "لقد قيّمت هذا الفني بهذا الرقم من قبل.",
     "categoryNotFound": "القسم غير موجود.",
     "bannerNotFound": "البانر غير موجود.",
