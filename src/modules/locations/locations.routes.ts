@@ -33,6 +33,37 @@ locationsRouter.get("/governorates", async (req, res) => {
   res.json({ governorates: rows });
 });
 
+// Cities across all governorates, with the governorate name on each row.
+// Optional ?q= filters by name, ?id= returns one city, ?governorateId= narrows to one governorate, ?limit= caps the rows (default 50, max 100).
+const citiesQuery = z.object({
+  q: z.string().trim().min(1).optional(),
+  id: z.coerce.number().int().positive().optional(),
+  governorateId: z.coerce.number().int().positive().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+});
+
+locationsRouter.get("/cities", async (req, res) => {
+  const { q, id, governorateId, limit } = parse(citiesQuery, req.query);
+  const rows = await db
+    .select({
+      ...cityColumns,
+      governorateNameAr: governorates.nameAr,
+      governorateNameEn: governorates.nameEn,
+    })
+    .from(cities)
+    .innerJoin(governorates, eq(governorates.id, cities.governorateId))
+    .where(
+      and(
+        id ? eq(cities.id, id) : undefined,
+        governorateId ? eq(cities.governorateId, governorateId) : undefined,
+        q ? nameMatch(cities.nameAr, cities.nameEn, q) : undefined,
+      ),
+    )
+    .orderBy(asc(cities.governorateId), asc(cities.id))
+    .limit(limit);
+  res.json({ cities: rows });
+});
+
 // Cities of one governorate. Optional ?q= filters by name.
 locationsRouter.get("/governorates/:id/cities", async (req, res) => {
   const { id } = parse(z.object({ id: z.coerce.number().int().positive() }), req.params);

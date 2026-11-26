@@ -92,6 +92,10 @@ Search ignores Arabic letter variants (أ إ آ = ا, ى = ي, ة = ه) and diac
 Optional `q`: governorates whose Arabic or English name contains it (case-insensitive).
 Response: `{ "governorates": [{ "id", "nameAr", "nameEn" }] }`.
 
+### `GET /api/cities`
+Cities of all governorates. Search ignores Arabic letter variants and diacritics. Optional query: `q` (Arabic or English name contains it), `id` (only that city), `governorateId` (only that governorate), `limit` (default 50, max 100). Rows come ordered by governorate, then city.
+Response: `{ "cities": [{ "id", "governorateId", "nameAr", "nameEn", "governorateNameAr", "governorateNameEn" }] }`.
+
 ### `GET /api/governorates/:id/cities`
 Optional `q`: cities of that governorate whose Arabic or English name contains it.
 Response: `{ "governorate": { "id", "nameAr", "nameEn" }, "cities": [{ "id", "governorateId", "nameAr", "nameEn" }] }`. 404 for an unknown governorate.
