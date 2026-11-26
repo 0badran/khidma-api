@@ -46,6 +46,33 @@ authRouter.post("/register/request-otp", async (req, res) => {
   res.json({ message: req.t("messages.otpSent") });
 });
 
+authRouter.post("/register/verify-otp", async (req, res) => {
+  const { email, otp: code } = parse(
+    z.object({ email: emailSchema, otp: z.string().regex(/^\d{6}$/) }),
+    req.body,
+  );
+  const [otp] = await db
+    .select()
+    .from(otpCodes)
+    .where(
+      and(
+        eq(otpCodes.email, email),
+        eq(otpCodes.purpose, "register"),
+        isNull(otpCodes.consumedAt),
+        gt(otpCodes.expiresAt, new Date()),
+      ),
+    )
+    .orderBy(desc(otpCodes.createdAt))
+    .limit(1);
+  if (!otp) throw badRequest("errors.otpInvalid");
+  if (otp.attempts >= OTP_MAX_ATTEMPTS) throw new HttpError(429, "errors.otpTooManyAttempts");
+  if (otp.codeHash !== hashOtp(email, code)) {
+    await db.update(otpCodes).set({ attempts: otp.attempts + 1 }).where(eq(otpCodes.id, otp.id));
+    throw badRequest("errors.otpInvalid");
+  }
+  res.json({ message: req.t("messages.otpVerified") });
+});
+
 const registerSchema = z.discriminatedUnion("role", [
   z.object({
     role: z.literal("customer"),

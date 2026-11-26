@@ -31,6 +31,9 @@ Public. The active hero banners for the home page, in display order. Response: `
 Body: `{ "email": string }`. Sends a 6-digit code by email (valid 10 minutes). Response 200: `{ "message": string }`.
 Errors: 409 email already registered, 429 asked again within 60 seconds. The mail can land in spam, and the message text tells the user to check there.
 
+### `POST /api/auth/register/verify-otp`
+Body: `{ "email": string, "otp": string }` (6 digits). Checks the sign-up code without using it up, so the form can move on to the next step only when the code is right. Response 200: `{ "message" }`. Errors: 400 wrong or expired code, 429 too many wrong codes (the same 5 attempts as register, shared). Register still checks the code again, so this call is a convenience and not a pass.
+
 ### `POST /api/auth/register`
 Checks the code and creates the account. Codes work once, with 5 wrong attempts allowed.
 Customer body: `{ "role": "customer", "name", "phone", "email", "password", "birthDate", "otp" }`.
