@@ -121,7 +121,7 @@ Any of `name`, `birthDate` (date or null to clear it), `cityId` (a city id or nu
 ## Ratings
 
 ### `GET /api/providers/:id/ratings`
-Response: `{ "ratings": [{ "id", "raterName", "stars", "comment", "createdAt" }] }` (latest 100).
+Response: `{ "ratings": [{ "id", "raterName", "stars", "comment", "createdAt", "mine" }] }` (latest 100). `mine` is true for ratings the signed-in caller gave (send the access token to get it) and false for everyone else, and for guests.
 
 ### `POST /api/providers/:id/ratings`
 Works signed in or as a guest. Body: `{ "stars": 1-5, "comment"?: string (max 1000), "name"?, "phone"? }`.

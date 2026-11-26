@@ -21,7 +21,7 @@ async function findVisibleProvider(id: number) {
   return row;
 }
 
-ratingsRouter.get("/", async (req, res) => {
+ratingsRouter.get("/", optionalAuth, async (req, res) => {
   const providerId = parse(idSchema, (req.params as { id?: string }).id);
   await findVisibleProvider(providerId);
   const rows = await db
@@ -31,12 +31,19 @@ ratingsRouter.get("/", async (req, res) => {
       stars: ratings.stars,
       comment: ratings.comment,
       createdAt: ratings.createdAt,
+      userId: ratings.userId,
     })
     .from(ratings)
     .where(eq(ratings.providerId, providerId))
     .orderBy(desc(ratings.createdAt))
     .limit(100);
-  res.json({ ratings: rows });
+  const me = req.auth?.id;
+  res.json({
+    ratings: rows.map(({ userId, ...rating }) => ({
+      ...rating,
+      mine: me !== undefined && userId === me,
+    })),
+  });
 });
 
 const guestSchema = z.object({
