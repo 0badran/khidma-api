@@ -36,7 +36,7 @@ Body: `{ "email": string, "otp": string }` (6 digits). Checks the sign-up code a
 
 ### `POST /api/auth/register`
 Creates the account. Send `"verificationToken"` from `register/verify-otp` (valid 30 minutes). The raw `"otp"` is not accepted here.
-Customer body: `{ "role": "customer", "name", "phone", "email", "password", "verificationToken" }`, with an optional `"birthDate"`.
+Customer body: `{ "role": "customer", "name", "phone", "email", "password", "verificationToken" }`, with an optional `"birthDate"` and an optional `"cityId": number` (from `GET /api/cities`).
 Provider body: same, with `"birthDate"` required, plus `"categoryId": number`, `"cityId": number` (from `GET /api/governorates/:id/cities`), optional `"photoUrl": url`, optional `"yearsOfExperience": whole number 0 to 60`, optional `"bio": text up to 1000 characters`.
 Limits: name 2 to 100 characters, password 8 to 128 characters.
 Response 201: `{ "token", "refreshToken", "expiresIn": 900, "user": { "id", "role" } }`. `token` is the access token (15 minutes). Send it as `Authorization: Bearer`. See "Sessions" below.
@@ -48,7 +48,7 @@ Response 200: `{ "token", "refreshToken", "expiresIn": 900, "user": { "id", "rol
 Errors: 401 wrong credentials, 503 maintenance (non-admin).
 
 ### `GET /api/auth/me` (any signed-in user)
-Response: `{ "user": { "id", "role", "name", "phone", "email", "birthDate" }, "provider"?: {...} }`. `provider` is only there for providers: `{ "categoryId", "categoryNameAr", "categoryNameEn", "cityId", "cityNameAr", "cityNameEn", "governorateId", "governorateNameAr", "governorateNameEn", "photoUrl" (stored value, can be null), "yearsOfExperience", "bio", "isActive" }`.
+Response: `{ "user": { "id", "role", "name", "phone", "email", "birthDate", "cityId" }, "provider"?: {...}, "city"?: {...} }`. `cityId` and `city` are for customers (null when they have not picked a city); `city` is `{ "id", "nameAr", "nameEn", "governorateId", "governorateNameAr", "governorateNameEn" }`. `provider` is only there for providers: `{ "categoryId", "categoryNameAr", "categoryNameEn", "cityId", "cityNameAr", "cityNameEn", "governorateId", "governorateNameAr", "governorateNameEn", "photoUrl" (stored value, can be null), "yearsOfExperience", "bio", "isActive" }`.
 
 ### `POST /api/auth/forgot-password/request-otp`
 Body: `{ "email": string }`. If the email has an account, sends a 6-digit reset code (valid 10 minutes). Always answers 200 `{ "message" }` the same way, so it does not reveal which emails are registered. Asking again within 60 seconds sends nothing new.
@@ -116,7 +116,7 @@ Same fields plus `"bio"`, `"phone"`, `"callUrl"` (`tel:...`) and `"whatsappUrl"`
 Any of `name`, `birthDate`, `cityId`, `categoryId`, `photoUrl` (url or null), `yearsOfExperience` (0 to 60 or null), `bio` (up to 1000 characters or null). At least one field. Response: `{ "ok": true }`.
 
 ### `PATCH /api/customers/me` (customer)
-Any of `name`, `birthDate` (date or null to clear it). At least one field. Response: `{ "ok": true }`.
+Any of `name`, `birthDate` (date or null to clear it), `cityId` (a city id or null to clear it). At least one field. 400 for an unknown city. Response: `{ "ok": true }`.
 
 ## Ratings
 

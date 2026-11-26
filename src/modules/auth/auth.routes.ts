@@ -89,6 +89,7 @@ const registerSchema = z.discriminatedUnion("role", [
     email: emailSchema,
     password: z.string().min(8).max(128),
     birthDate: z.iso.date().optional(),
+    cityId: z.number().int().positive().optional(),
     verificationToken: z.string().min(1).max(500),
   }),
   z.object({
@@ -120,6 +121,11 @@ authRouter.post("/register", async (req, res) => {
   const [emailUser] = await db.select({ id: users.id }).from(users).where(eq(users.email, body.email));
   if (emailUser) throw conflict("errors.emailTaken");
 
+  if (body.role === "customer" && body.cityId) {
+    const [city] = await db.select({ id: cities.id }).from(cities).where(eq(cities.id, body.cityId));
+    if (!city) throw badRequest("errors.cityNotFound");
+  }
+
   if (body.role === "provider") {
     const [category] = await db
       .select({ id: categories.id })
@@ -141,6 +147,7 @@ authRouter.post("/register", async (req, res) => {
         email: body.email,
         passwordHash,
         birthDate: body.birthDate,
+        cityId: body.role === "customer" ? body.cityId : undefined,
         emailVerifiedAt: new Date(),
         lastLoginAt: new Date(),
       })
@@ -270,6 +277,7 @@ authRouter.get("/me", requireAuth, async (req, res) => {
       phone: users.phone,
       email: users.email,
       birthDate: users.birthDate,
+      cityId: users.cityId,
     })
     .from(users)
     .where(eq(users.id, req.auth!.id));
@@ -299,7 +307,23 @@ authRouter.get("/me", requireAuth, async (req, res) => {
       .leftJoin(governorates, eq(governorates.id, cities.governorateId))
       .where(eq(providers.userId, user.id));
   }
-  res.json({ user, ...(provider ? { provider } : {}) });
+  // Customers get their optional city with its governorate, null when they have none.
+  let city = null;
+  if (user?.role === "customer" && user.cityId) {
+    [city = null] = await db
+      .select({
+        id: cities.id,
+        nameAr: cities.nameAr,
+        nameEn: cities.nameEn,
+        governorateId: cities.governorateId,
+        governorateNameAr: governorates.nameAr,
+        governorateNameEn: governorates.nameEn,
+      })
+      .from(cities)
+      .innerJoin(governorates, eq(governorates.id, cities.governorateId))
+      .where(eq(cities.id, user.cityId));
+  }
+  res.json({ user, ...(provider ? { provider } : {}), ...(user?.role === "customer" ? { city } : {}) });
 });
 
 // Deleting an account hides it. It is purged after 30 days without sign-in.

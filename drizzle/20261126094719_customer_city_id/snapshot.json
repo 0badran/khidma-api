@@ -1,0 +1,90 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "8de45121-6e3d-4bfd-9362-fdb6574ec020",
+  "prevIds": [
+    "bc65adc3-2cb9-421f-9d6a-5528ab719ffa"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "users",
+        "city_id"
+      ],
+      "writes": [
+        "s|col|public.users.city_id",
+        "n|col|public.users.city_id",
+        "e|col|public.users.city_id"
+      ],
+      "reads": [
+        "n|tbl|public.users",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "users"
+      ],
+      "writes": [
+        "s|fk|public.users.users_city_id_cities_id_fkey",
+        "n|fk|public.users.users_city_id_cities_id_fkey",
+        "e|fk|public.users.users_city_id_cities_id_fkey",
+        "n|con|public.users.users_city_id_cities_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.users",
+        "n|sch|public",
+        "n|tbl|public.cities",
+        "n|sch|public",
+        "n|col|public.users.city_id",
+        "n|col|public.cities.id",
+        "e|uniqueness|public.cities.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "users",
+        "name": "city_id",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "users",
+        "name": "users_city_id_cities_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "city_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "cities",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "NO ACTION",
+        "entityType": "fks"
+      }
+    }
+  ]
+}

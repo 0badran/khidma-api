@@ -66,6 +66,8 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   birthDate: date("birth_date", { mode: "string" }),
+  // Optional city of a customer. Providers keep theirs on the provider row.
+  cityId: integer("city_id").references(() => cities.id),
   emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
   // Set when the user deletes the account; the account is purged after 30 days without login.
   hiddenAt: timestamp("hidden_at", { withTimezone: true }),
