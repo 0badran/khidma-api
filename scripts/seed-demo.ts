@@ -31,6 +31,19 @@ const bios = [
   "تنظيف المنازل والخزانات والسجاد والستائر بمعدات حديثة.",
   "نقل وفك وتركيب الأثاث بحرص وفريق مدرب.",
 ];
+// Generated portraits, one per demo provider (test data only), hosted on Cloudinary.
+const photos = [
+  "https://res.cloudinary.com/dswszy2zi/image/upload/v1795676893/khidma/category/snuza3yb7qnvfseb9bba.jpg",
+  "https://res.cloudinary.com/dswszy2zi/image/upload/v1795676895/khidma/category/zstukcm0tjg26rjmpmbz.jpg",
+  "https://res.cloudinary.com/dswszy2zi/image/upload/v1795676896/khidma/category/hdfoubj2oylezdqocfjg.jpg",
+  "https://res.cloudinary.com/dswszy2zi/image/upload/v1795676898/khidma/category/ltsdislt63uxmmsgnvxh.jpg",
+  "https://res.cloudinary.com/dswszy2zi/image/upload/v1795676899/khidma/category/selteqqtptkvb4ij5fav.jpg",
+  "https://res.cloudinary.com/dswszy2zi/image/upload/v1795676901/khidma/category/sqqzvunyrtizdl2lesek.jpg",
+  "https://res.cloudinary.com/dswszy2zi/image/upload/v1795676902/khidma/category/ng5jlenx5zchkrizdpqd.jpg",
+  "https://res.cloudinary.com/dswszy2zi/image/upload/v1795676904/khidma/category/shziekqm6mz39axhm1gx.jpg",
+  "https://res.cloudinary.com/dswszy2zi/image/upload/v1795676905/khidma/category/hbrkuv9xqdn0hxhcs3db.jpg",
+  "https://res.cloudinary.com/dswszy2zi/image/upload/v1795676906/khidma/category/dihtzlzhhwp1qozjwfcv.jpg",
+];
 const cityNames = ["المنصورة", "مدينة نصر", "المحلة الكبرى", "طنطا", "دمياط"];
 
 if (process.argv.includes("--remove")) {
@@ -60,6 +73,7 @@ for (const [i, cat] of cats.entries()) {
         yearsOfExperience: years[i % years.length],
         bio: bios[i % bios.length],
         cityId: cityIds[i % cityIds.length],
+        photoUrl: photos[i % photos.length],
       })
       .where(eq(providers.userId, exists.id));
     continue;
@@ -82,6 +96,7 @@ for (const [i, cat] of cats.entries()) {
     userId: user.id,
     categoryId: cat.id,
     cityId: cityIds[i % cityIds.length],
+    photoUrl: photos[i % photos.length],
   });
   created++;
 }
